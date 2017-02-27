@@ -1,0 +1,292 @@
+/*! HTML5 Boilerplate v5.0 | MIT License | http://h5bp.com/ */
+
+html {
+    color: #222;
+    font-size: 1em;
+    line-height: 1.4;
+}
+
+::-moz-selection {
+    background: #b3d4fc;
+    text-shadow: none;
+}
+
+::selection {
+    background: #b3d4fc;
+    text-shadow: none;
+}
+
+hr {
+    display: block;
+    height: 1px;
+    border: 0;
+    border-top: 1px solid #ccc;
+    margin: 1em 0;
+    padding: 0;
+}
+
+audio,
+canvas,
+iframe,
+img,
+svg,
+video {
+    vertical-align: middle;
+}
+
+fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.browserupgrade {
+    margin: 0.2em 0;
+    background: #ccc;
+    color: #000;
+    padding: 0.2em 0;
+}
+
+
+/* ==========================================================================
+   Author's custom styles
+   ========================================================================== */
+
+body {
+  background: #DEDEDE;
+  font-family: 'Open Sans', sans-serif;
+  padding: 10px 0 40px;
+  font-size: 14px;
+  font-size: 0.8em;
+}
+
+.wrapper {
+  width: 75%;
+  margin: 0 auto;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'PT Sans Narrow', sans-serif;
+  font-size: 4em;
+}
+
+
+.page-nav {
+  float:right;
+}
+
+.page-nav span {
+  margin-left: 10px;
+}
+.page-nav span:hover {
+  cursor: pointer;
+  color: #120041;
+}
+#main-add {
+  display: none;
+}
+.editmode #main-add {
+  display: inline-block;
+}
+
+
+.main-heading {
+  padding-top: 1em;
+  margin-top: 0;
+  line-height: 1em;
+}
+
+
+#countrysearch {
+  box-sizing: border-box;
+  width: 100%;
+  font-size: 2em;
+  padding: 19px 18px 13px 18px;
+  -webkit-appearance: none;
+  border: none;
+  box-shadow: 0 4px 0 0 #00EEFF inset;
+  background-color: #fff;
+  color: #120041;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-left: 8px solid #120041;
+  border-right: 10px solid #120041;
+  border-top: 5px solid #120041;
+  border-bottom: 5px solid #120041;
+  margin-top: 4px;
+}
+
+
+ul.list {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+}
+
+.list li {
+    padding: 20px;
+    background: #fff;
+    margin: 5px;
+    flex: 1 1 200px;
+}
+
+li h3 {
+  text-transform: capitalize;
+  font-size: 2em;
+  margin-bottom: 0.3em;
+  margin-top: 0.4em;
+}
+
+img.close-img {
+  display: none;
+  float: right;
+  width: 20px;
+  cursor: pointer;
+}
+
+.editmode img.close-img {
+  display: block;
+}
+
+
+
+
+
+
+
+
+
+/* ==========================================================================
+   Media Queries
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+  body {
+    font-size: 16px;
+    font-size: 1em;
+  }
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+
+}
+
+/* ==========================================================================
+   Helper classes
+   ========================================================================== */
+
+.hidden {
+    display: none !important;
+    visibility: hidden;
+}
+
+.visuallyhidden {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.visuallyhidden.focusable:active,
+.visuallyhidden.focusable:focus {
+    clip: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    position: static;
+    width: auto;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.clearfix:before,
+.clearfix:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after {
+    clear: both;
+}
+
+.clearfix {
+    *zoom: 1;
+}
+
+/* ==========================================================================
+   Print styles
+   ========================================================================== */
+
+@media print {
+    *,
+    *:before,
+    *:after {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    a[href^="#"]:after,
+    a[href^="javascript:"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group;
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
