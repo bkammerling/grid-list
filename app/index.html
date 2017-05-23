@@ -24,13 +24,15 @@
         <div class="wrapper">
 
           <div class="page-nav">
-            <span id="main-add">Add</span>
-            <span id="main-edit">Edit</span>
+
           </div>
 
-          <h2 class="main-heading">
-            What country are you looking for?
-          </h2>
+          <div class="input-area">
+            <input class="searchbar" type="search" />
+            <img onClick='viewGrid' src='./img/grid.svg' alt="4 blocks - to view grid" class='input-icon' />
+            <img onClick='viewGrid' src='./img/list.svg' alt="3 horizontal lines blocks - to view list" class='input-icon' />
+            <img onClick='viewGrid' src='./img/daterange.svg' alt="a to z - to sort" class='input-icon' />
+          </div>
 
           <div id="dataArea">
             <input type="search" class="search" id="countrysearch" placeholder="Enter country here..." autofocus />

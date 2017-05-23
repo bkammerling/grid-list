@@ -94,31 +94,45 @@ h1, h2, h3, h4 {
 }
 
 
-.main-heading {
-  padding-top: 1em;
-  margin-top: 0;
-  line-height: 1em;
+/*
+* styles for common input component
+*/
+
+.searchbar {
+    font-size: 1.5em;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666164;
+
+    width: 100%;
+    padding: 5px 15px;
+    -webkit-appearance: none;
+    border-radius: 10px;
+    border: 1px solid #B7B1B5;
+}
+
+.searchbar:focus {
+  outline: none;
+  border: 1px solid #666164;
 }
 
 
-#countrysearch {
-  box-sizing: border-box;
-  width: 100%;
-  font-size: 2em;
-  padding: 19px 18px 13px 18px;
-  -webkit-appearance: none;
-  border: none;
-  box-shadow: 0 4px 0 0 #00EEFF inset;
-  background-color: #fff;
-  color: #120041;
-  text-transform: uppercase;
-  font-weight: 600;
-  border-left: 8px solid #120041;
-  border-right: 10px solid #120041;
-  border-top: 5px solid #120041;
-  border-bottom: 5px solid #120041;
-  margin-top: 4px;
+.input-icon {
+    margin: 12px 8px;
+    color: #371C16;
+    border-radius: 0;
+    box-shadow: none !important;
+    width: 40px;
+    height: 40px;
 }
+
+
+
+.input-icon.active, .input-icon:hover {
+    opacity: 0.2;
+}
+
+
 
 
 ul.list {
