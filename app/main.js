@@ -1,26 +1,128 @@
 
-var options = {
-  valueNames: [ 'id', 'country', 'details' ],
-  item: '<li><img class="close-img" src="../img/close.png" /><span style="display:none" class="id"></span><h3 class="country" contenteditable="false"></h3><p class="details" contenteditable="false"></p></li>'
-};
-
-var countryList,
-    countryData;
+var countryData;
 var editMode = false;
 
 const editButton = document.getElementById('main-edit');
-editButton.addEventListener('click', editModeToggle);
-const addButton = document.getElementById('main-add');
+//editButton.addEventListener('click', editModeToggle);
+const addButton = document.getElementById('add-button');
 addButton.addEventListener('click', addItem);
+
+holmes({
+  input: '.searchbar', // default: input[type=search]
+  find: 'ul.list li', // querySelectorAll that matches each of the results individually
+  dynamic: true
+});
 
 request('GET', '../js/countries.json').done(function (res) {
   countryData = JSON.parse(res.getBody());
-  setListData(countryData);
+  // Add the contents of data to dom
+  createList(countryData);
 });
 
-function setListData(listData) {
-  countryList = new List('dataArea', options, listData);
-  countryList.sort('country', { order: "asc" });
+function createList(data) {
+  var listArea = document.getElementById('main-list');
+  var dataInCategories = splitIntoCategories(data);
+  dataInCategories.map(function(categoryArray) {
+    listArea.appendChild(makeUL(categoryArray));
+  })
+}
+
+function splitIntoCategories(data) {
+  //first make list of categories
+  var categoryList = [];
+  data.map(function(item){
+    if(categoryList.indexOf(item.category)==-1) {
+      // new category, so make new list
+      categoryList.push(item.category);
+    }
+  });
+  var dataInCategories = [];
+  categoryList.map(function(category){
+    var itemsInCategory = [];
+    data.map(function(item) {
+        if(item.category==category){
+          itemsInCategory.push(item);
+        }
+    })
+    dataInCategories.push(itemsInCategory);
+    //document.getElementById('main-list').appendChild(makeUL(itemsInCategory));
+  })
+  return dataInCategories;
+}
+
+function makeUL(array) {
+    // Create a div for the list and heading
+    var container = document.createElement('div');
+    container.className = "list-container";
+
+    // Create the list element:
+    var list = document.createElement('ul');
+    list.className = "list";
+
+    var heading = document.createElement('h3');
+    heading.className = "list-heading";
+    heading.appendChild(document.createTextNode(array[0].category));
+    container.appendChild(heading);
+
+    for(var i = 0; i < array.length; i++) {
+        // Create the list item:
+        var item = document.createElement('li');
+        item.className = "list-item";
+        // Set its contents:
+        var title = document.createTextNode(array[i].name);
+        var code = array[i].code;
+        item.id = code;
+        // create country code badge
+        var codeBadge = document.createElement('span');
+        codeBadge.appendChild(document.createTextNode(code));
+        codeBadge.className = "code-badge"
+        // add badge and country name to our li item
+        item.appendChild(codeBadge);
+        item.appendChild(title);
+
+        item.onclick = function() {
+          clickItem(this.id);
+        }
+        // Add it to the list:
+        list.appendChild(item);
+    }
+
+    container.appendChild(list);
+    // Finally, return the constructed list:
+    return container;
+}
+
+
+function clickItem(id, elem) {
+  //get data using id
+  var thisCountry;
+  countryData.map(function(item) {
+    if(item.code==id) thisCountry = item;
+  })
+  console.log(thisCountry);
+  // instanciate new modal
+  var modal = new tingle.modal({
+      footer: true,
+      stickyFooter: false,
+      closeMethods: ['overlay', 'button', 'escape'],
+      closeLabel: "Close",
+      cssClass: ['custom-class-1', 'custom-class-2'],
+      beforeClose: function() {
+          // here's goes some logic
+          // e.g. save content before closing the modal
+          return true; // close the modal
+      	return false; // nothing happens
+      }
+  });
+
+  var title = '<h3><span class="code-badge">'+ thisCountry.code+'</span>'+ thisCountry.name +'</h3>';
+
+  // set content
+  modal.setContent(title);
+
+  // open modal
+  modal.open();
+
 }
 
 function saveCountryData(json) {
@@ -30,6 +132,10 @@ function saveCountryData(json) {
   });
 }
 
+function viewGrid() {
+
+}
+/*
 function editModeToggle() {
   editMode = !editMode;
   document.body.className = editMode ? " editmode" : "";
@@ -66,7 +172,7 @@ function disableTextEditing() {
     //element.removeEventListener('click', detailBeginEdit);
   });
 }
-
+*/
 
 function endEdit(event) {
   var siblings = event.target.parentElement.children;
@@ -91,19 +197,13 @@ function findById(country) {
 
 
 function addItem() {
+
+  /*
   var newItem = {
     "id": Math.floor(Math.random()*12000),
     "country": "New Title",
-    "details": "Some details"
-  };
-  countryData.unshift(newItem);
-  var itemHTML = document.createElement('LI');
-  itemHTML.innerHTML = '<img class="close-img" src="../img/close.png" /><span style="display:none" class="id">'+newItem.id+'</span><h3 class="country" contenteditable="true">New Item</h3><p class="details" contenteditable="true">Some details</p>'
-  var listElement = document.getElementById('main-list');
-  listElement.insertBefore(itemHTML, listElement.childNodes[0]);
-  countryList.reIndex();
-  enableTextEditing();
-  console.log(countryData);
+    "category": "Some details"
+  };*/
 }
 
 function removeItem(event) {

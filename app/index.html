@@ -9,9 +9,12 @@
 
         <link href="https://fonts.googleapis.com/css?family=Open+Sans|PT+Sans+Narrow:700" rel="stylesheet">
         <link rel="stylesheet" href="../css/normalize.min.css">
+        <link rel="stylesheet" href="../node_modules/tingle.js/dist/tingle.min.css">
         <link rel="stylesheet" href="../css/main.css">
 
         <script src="../js/vendor/modernizr-2.8.3.min.js"></script>
+        <script src="../node_modules/tingle.js/dist/tingle.min.js"></script>
+        <script src="../node_modules/holmes.js/js/holmes.js"></script>
         <script src="../node_modules/list.js/dist/list.min.js"></script>
         <script src="../node_modules/then-request/dist/request.min.js"></script>
 
@@ -22,24 +25,123 @@
         <![endif]-->
 
         <div class="wrapper">
+          <button id="authorize-button" style="display: none;">Authorize</button>
+          <button id="signout-button" style="display: none;">Sign Out</button>
 
-          <div class="page-nav">
+          <header>
+            <div class="page-nav">
+            </div>
+            <div class="logo-container">
+              <img src='./img/gh-knowledge-logo.jpg' alt="logo" />
+            </div>
+          </header>
 
-          </div>
 
           <div class="input-area">
             <input class="searchbar" type="search" />
-            <img onClick='viewGrid' src='./img/grid.svg' alt="4 blocks - to view grid" class='input-icon' />
-            <img onClick='viewGrid' src='./img/list.svg' alt="3 horizontal lines blocks - to view list" class='input-icon' />
-            <img onClick='viewGrid' src='./img/daterange.svg' alt="a to z - to sort" class='input-icon' />
+            <img onclick='viewGrid()' src='./img/grid.svg' alt="4 blocks - to view grid" class='input-icon' />
+            <img onclick='viewGrid()' src='./img/list.svg' alt="3 horizontal lines blocks - to view list" class='input-icon' />
+            <img onclick='viewGrid()' src='./img/daterange.svg' alt="a to z - to sort" class='input-icon' />
+            <div id='add-button'>
+              <span>+</span>
+            </div>
           </div>
 
           <div id="dataArea">
-            <input type="search" class="search" id="countrysearch" placeholder="Enter country here..." autofocus />
-            <ul class="list" id="main-list"></ul>
+            <div class="" id="main-list"></div>
+          </div>
+
+          <div id="content">
           </div>
 
         </div>
 
+
+
+
+        <script type="text/javascript">
+
+          // Client ID and API key from the Developer Console
+          var CLIENT_ID = '577239092381-n0sjm8lrecbbbgp88f7d6lfcqg17dtsi.apps.googleusercontent.com';
+
+          // Array of API discovery doc URLs for APIs used by the quickstart
+          var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+
+          // Authorization scopes required by the API; multiple scopes can be
+          // included, separated by spaces.
+          var SCOPES = "https://www.googleapis.com/auth/spreadsheets.readonly";
+
+          var authorizeButton = document.getElementById('authorize-button');
+          var signoutButton = document.getElementById('signout-button');
+
+          /**
+           *  On load, called to load the auth2 library and API client library.
+           */
+          function handleClientLoad() {
+            gapi.load('client:auth2', initClient);
+          }
+
+          /**
+           *  Initializes the API client library and sets up sign-in state
+           *  listeners.
+           */
+          function initClient() {
+            gapi.client.init({
+              discoveryDocs: DISCOVERY_DOCS,
+              clientId: CLIENT_ID,
+              scope: SCOPES
+            }).then(function () {
+              listMajors();
+            });
+          }
+
+
+          /**
+           * Append a pre element to the body containing the given message
+           * as its text node. Used to display the results of the API call.
+           *
+           * @param {string} message Text to be placed in pre element.
+           */
+          function appendPre(message) {
+            var pre = document.getElementById('content');
+            var textContent = document.createTextNode(message + '\n');
+            pre.appendChild(textContent);
+          }
+
+          /**
+           * Print the names and majors of students in a sample spreadsheet:
+           * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+           */
+          function listMajors() {
+            gapi.client.sheets.spreadsheets.values.get({
+              spreadsheetId: '1i3kmPg9XTaeFZN6pCbqYEUm_A9G23wg3nWlmZFX6eEQ',
+              range: 'masterSheet!A1:B2',
+              key: 'AIzaSyBqTKS7eMsIaXShA9a1OVEuuX0i7BUFYbw',
+            }).then(function(response) {
+              var data = response.result;
+              console.log(data);
+              if (range.values.length > 0) {
+                appendPre('Name, Major:');
+                for (i = 0; i < range.values.length; i++) {
+                  var row = range.values[i];
+                  // Print columns A and E, which correspond to indices 0 and 4.
+                  appendPre(row[0] + ', ' + row[4]);
+                }
+              } else {
+                appendPre('No data found.');
+              }
+            }, function(response) {
+              appendPre('Error: ' + response.result.error.message);
+            });
+          }
+        </script>
+
+        <script async defer src="https://apis.google.com/js/api.js"
+          onload="this.onload=function(){};handleClientLoad()"
+          onreadystatechange="if (this.readyState === 'complete') this.onload()">
+        </script>
+
     </body>
+
+
 </html>
