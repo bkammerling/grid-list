@@ -12,6 +12,7 @@
   "dependencies": {
     "holmes.js": "^1.16.6",
     "list.js": "^1.5.0",
+    "mustache": "^2.3.0",
     "then-request": "^2.2.0",
     "tingle.js": "^0.10.0"
   },

@@ -1,5 +1,21 @@
+var config = {
+  apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
+  databaseURL: "https://knowledge-database-87320.firebaseio.com",
+  projectId: "knowledge-database-87320",
+  storageBucket: "knowledge-database-87320.appspot.com",
+};
+firebase.initializeApp(config);
+
+var database = firebase.database();
 
 var countryData;
+firebase.database().ref('/masterSheet/').once('value').then(function(snapshot){
+  var fbData = snapshot.val();
+  var dataArray = Object.keys(fbData).map(function(key) { return fbData[key] });
+  createList(dataArray);
+  countryData = dataArray;
+});
+
 var editMode = false;
 
 const editButton = document.getElementById('main-edit');
@@ -13,17 +29,17 @@ holmes({
   dynamic: true
 });
 
-request('GET', '../js/countries.json').done(function (res) {
-  countryData = JSON.parse(res.getBody());
-  // Add the contents of data to dom
-  createList(countryData);
-});
 
 function createList(data) {
   var listArea = document.getElementById('main-list');
   var dataInCategories = splitIntoCategories(data);
   dataInCategories.map(function(categoryArray) {
     listArea.appendChild(makeUL(categoryArray));
+    var items = document.getElementsByClassName('list-item');
+    Array.from(items).forEach(function(element) {
+      element.addEventListener('click', clickItem, false);
+    });
+
   })
 }
 
@@ -51,6 +67,24 @@ function splitIntoCategories(data) {
 }
 
 function makeUL(array) {
+    var countries = { 'countryList': array };
+    console.log(countries);
+    var template =
+    '<div class="list-container"> \
+      <h3 class="list-heading"> {{countryList.0.category}} </h3> \
+      <ul class="list">{{#countryList}} \
+        <li class="list-item" id="{{code}}"> \
+          <span class="code-badge">{{code}}</span> \
+          <span class="list-item-title">{{name}}</span> \
+        </li> \
+        {{/countryList}} \
+      </ul> \
+    </div>';
+    var html = Mustache.to_html(template, countries);
+    var container = document.createElement('div');
+    container.innerHTML = html;
+    return container;
+/*
     // Create a div for the list and heading
     var container = document.createElement('div');
     container.className = "list-container";
@@ -64,12 +98,16 @@ function makeUL(array) {
     heading.appendChild(document.createTextNode(array[0].category));
     container.appendChild(heading);
 
+
+
     for(var i = 0; i < array.length; i++) {
         // Create the list item:
         var item = document.createElement('li');
         item.className = "list-item";
         // Set its contents:
-        var title = document.createTextNode(array[i].name);
+        var title = document.createElement('span');
+        title.appendChild(document.createTextNode(array[i].name));
+        title.className = "list-item-title";
         var code = array[i].code;
         item.id = code;
         // create country code badge
@@ -89,11 +127,16 @@ function makeUL(array) {
 
     container.appendChild(list);
     // Finally, return the constructed list:
-    return container;
+    return container;*/
 }
 
 
-function clickItem(id, elem) {
+function clickItem(e) {
+  if(this) {
+    var id = this.id;
+  } else {
+    id = 'AL';
+  }
   //get data using id
   var thisCountry;
   countryData.map(function(item) {
@@ -125,12 +168,10 @@ function clickItem(id, elem) {
 
 }
 
-function saveCountryData(json) {
-  request('POST', '../js/jsonsave.php', { 'body':JSON.stringify(json) }).done(function (res) {
-    console.log(res);
-    return res.getBody();
-  });
+function modalTemplate(country) {
+
 }
+
 
 function viewGrid() {
 

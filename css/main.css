@@ -207,6 +207,8 @@ ul.list {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .code-badge{
@@ -245,6 +247,7 @@ img.close-img {
 
 .tingle-modal-box {
   background: #F6F6F7;
+  width: 75%;
 }
 
 
