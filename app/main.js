@@ -13,10 +13,17 @@ firebase.database().ref('/masterSheet/').once('value').then(function(snapshot){
   var fbData = snapshot.val();
   var dataArray = Object.keys(fbData).map(function(key) { return fbData[key] });
   createList(dataArray);
+  setupFooter(dataArray);
   countryData = dataArray;
 });
 
 var editMode = false;
+const listArea = document.getElementById('main-list');
+
+const gridButton = document.getElementById('view-grid');
+gridButton.addEventListener('click', viewGrid);
+const listButton = document.getElementById('view-list');
+const sortButton = document.getElementById('sort-list');
 
 const editButton = document.getElementById('main-edit');
 //editButton.addEventListener('click', editModeToggle);
@@ -31,10 +38,9 @@ holmes({
 
 
 function createList(data) {
-  var listArea = document.getElementById('main-list');
   var dataInCategories = splitIntoCategories(data);
   dataInCategories.map(function(categoryArray) {
-    listArea.appendChild(makeUL(categoryArray));
+    listArea.innerHTML = makeUL(categoryArray);
     var items = document.getElementsByClassName('list-item');
     Array.from(items).forEach(function(element) {
       element.addEventListener('click', clickItem, false);
@@ -68,7 +74,6 @@ function splitIntoCategories(data) {
 
 function makeUL(array) {
     var countries = { 'countryList': array };
-    console.log(countries);
     var template =
     '<div class="list-container"> \
       <h3 class="list-heading"> {{countryList.0.category}} </h3> \
@@ -81,53 +86,31 @@ function makeUL(array) {
       </ul> \
     </div>';
     var html = Mustache.to_html(template, countries);
-    var container = document.createElement('div');
-    container.innerHTML = html;
-    return container;
-/*
-    // Create a div for the list and heading
-    var container = document.createElement('div');
-    container.className = "list-container";
-
-    // Create the list element:
-    var list = document.createElement('ul');
-    list.className = "list";
-
-    var heading = document.createElement('h3');
-    heading.className = "list-heading";
-    heading.appendChild(document.createTextNode(array[0].category));
-    container.appendChild(heading);
+    return html;
+}
 
 
+function setupFooter(array) {
+  const footerArea = document.getElementById('footerData');
+  footerArea.innerHTML = buildFooter(array);
+  var items = document.getElementsByClassName('footer-item');
+  Array.from(items).forEach(function(element) {
+    element.addEventListener('click', clickItem, false);
+  });
+}
 
-    for(var i = 0; i < array.length; i++) {
-        // Create the list item:
-        var item = document.createElement('li');
-        item.className = "list-item";
-        // Set its contents:
-        var title = document.createElement('span');
-        title.appendChild(document.createTextNode(array[i].name));
-        title.className = "list-item-title";
-        var code = array[i].code;
-        item.id = code;
-        // create country code badge
-        var codeBadge = document.createElement('span');
-        codeBadge.appendChild(document.createTextNode(code));
-        codeBadge.className = "code-badge"
-        // add badge and country name to our li item
-        item.appendChild(codeBadge);
-        item.appendChild(title);
-
-        item.onclick = function() {
-          clickItem(this.id);
-        }
-        // Add it to the list:
-        list.appendChild(item);
-    }
-
-    container.appendChild(list);
-    // Finally, return the constructed list:
-    return container;*/
+function buildFooter(array) {
+  var countries = { 'countryList': array };
+  var template =
+    '<ul class="footer-list">{{#countryList}} \
+      <li class="footer-item" id="{{code}}"> \
+        <span class="list-item-title">{{name}}</span> \
+      </li> \
+      {{/countryList}} \
+    </ul> \
+  </div>';
+  var html = Mustache.to_html(template, countries);
+  return html;
 }
 
 
@@ -142,7 +125,8 @@ function clickItem(e) {
   countryData.map(function(item) {
     if(item.code==id) thisCountry = item;
   })
-  console.log(thisCountry);
+  var html = modalTemplate(thisCountry);
+
   // instanciate new modal
   var modal = new tingle.modal({
       footer: true,
@@ -158,10 +142,8 @@ function clickItem(e) {
       }
   });
 
-  var title = '<h3><span class="code-badge">'+ thisCountry.code+'</span>'+ thisCountry.name +'</h3>';
-
   // set content
-  modal.setContent(title);
+  modal.setContent(html);
 
   // open modal
   modal.open();
@@ -169,13 +151,40 @@ function clickItem(e) {
 }
 
 function modalTemplate(country) {
+  var moustacheSections = { 'sections' : [], 'name': country.name, 'code': country.code };
+  for (var prop in country){
+    if (country.hasOwnProperty(prop) && country[prop].length > 1 && prop!='name' && prop!='code' && prop!='category'){
+      var sectionObject = {};
+      sectionObject.value = country[prop];
+      if(!isNaN(prop)) prop = '';
+      sectionObject.key = prop;
+      moustacheSections['sections'].push(sectionObject);
+    }
+  }
+  console.log(moustacheSections);
+
+  var template =
+  '<h3><span class="code-badge">{{code}}</span>{{name}}</h3> \
+  <div class="country-info"> \
+    {{#sections}} \
+    <div class="section clearfix"> \
+      <dt class="section-title">{{key}}</dt> \
+      <dd class="section-content">{{value}}</dd> \
+    </div> \
+    {{/sections}} \
+  </div>';
+  var html = Mustache.to_html(template, moustacheSections);
+
+  return html;
 
 }
 
 
 function viewGrid() {
+  countryData.sort(byName);
 
 }
+
 /*
 function editModeToggle() {
   editMode = !editMode;
@@ -256,3 +265,23 @@ function removeItem(event) {
   countryData.splice(countryIndex, 1);
   saveCountryData(countryData);
 }
+
+
+/* ==========================================================================
+   HELPER FUNCTIONS
+   ========================================================================== */
+
+ function byCategory(a,b) {
+   if (a.category < b.category)
+     return -1;
+   if (a.category > b.category)
+     return 1;
+   return 0;
+ }
+ function byName(a,b) {
+   if (a.name < b.name)
+     return -1;
+   if (a.name > b.name)
+     return 1;
+   return 0;
+ }
