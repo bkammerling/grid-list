@@ -14,10 +14,11 @@
         <link rel="stylesheet" href="../css/main.css">
 
         <script src="../js/vendor/modernizr-2.8.3.min.js"></script>
+        <script src="../js/vendor/navigo.min.js"></script>
         <script src="../node_modules/tingle.js/dist/tingle.min.js"></script>
         <script src="../node_modules/holmes.js/js/holmes.js"></script>
         <script src="../node_modules/mustache/mustache.min.js"></script>
-        <script src="../js/vendor/tinysort.min.js"></script>
+        <script src="../js/vendor/dropzone.js"></script>
 
     </head>
     <body>
@@ -51,6 +52,15 @@
           <div id="dataArea">
             <div class="" id="main-list"></div>
           </div>
+
+          <script type="text/content" id="content-list">
+            <p class="big">End of list !!!</p>
+          </script>
+
+          <script type="text/content" id="content-single">
+            <small>(The content of this page is based on the URL)</small>
+            <p class="big">They speak {{language}} in {{name}} !!!</p>
+          </script>
 
 
         </div>

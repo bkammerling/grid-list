@@ -12,8 +12,8 @@ var countryData;
 firebase.database().ref('/masterSheet/').once('value').then(function(snapshot){
   var fbData = snapshot.val();
   var dataArray = Object.keys(fbData).map(function(key) { return fbData[key] });
-  createList(dataArray);
-  setupFooter(dataArray);
+  createList(dataArray.sort(byCategory));
+  setupFooter(dataArray.sort(byName));
   countryData = dataArray;
 });
 
@@ -23,7 +23,9 @@ const listArea = document.getElementById('main-list');
 const gridButton = document.getElementById('view-grid');
 gridButton.addEventListener('click', viewGrid);
 const listButton = document.getElementById('view-list');
+listButton.addEventListener('click', viewList);
 const sortButton = document.getElementById('sort-list');
+sortButton.addEventListener('click', sortList);
 
 const editButton = document.getElementById('main-edit');
 //editButton.addEventListener('click', editModeToggle);
@@ -38,46 +40,29 @@ holmes({
 
 
 function createList(data) {
-  var dataInCategories = splitIntoCategories(data);
-  dataInCategories.map(function(categoryArray) {
-    listArea.innerHTML = makeUL(categoryArray);
-    var items = document.getElementsByClassName('list-item');
-    Array.from(items).forEach(function(element) {
-      element.addEventListener('click', clickItem, false);
-    });
-
-  })
-}
-
-function splitIntoCategories(data) {
-  //first make list of categories
-  var categoryList = [];
-  data.map(function(item){
-    if(categoryList.indexOf(item.category)==-1) {
-      // new category, so make new list
-      categoryList.push(item.category);
-    }
+  listArea.innerHTML = makeUL(data);
+  var items = document.getElementsByClassName('list-item');
+  Array.from(items).forEach(function(element) {
+    element.addEventListener('click', clickItem, false);
   });
-  var dataInCategories = [];
-  categoryList.map(function(category){
-    var itemsInCategory = [];
-    data.map(function(item) {
-        if(item.category==category){
-          itemsInCategory.push(item);
-        }
-    })
-    dataInCategories.push(itemsInCategory);
-    //document.getElementById('main-list').appendChild(makeUL(itemsInCategory));
-  })
-  return dataInCategories;
 }
+
 
 function makeUL(array) {
+    array.map(function(item, index, array){
+      if(index>=1) {
+        item.sameCategory = (item.category == array[index-1].category);
+      } else {
+        item.sameCategory = false;
+      }
+      return item;
+    })
+    console.log(array);
     var countries = { 'countryList': array };
     var template =
     '<div class="list-container"> \
-      <h3 class="list-heading"> {{countryList.0.category}} </h3> \
       <ul class="list">{{#countryList}} \
+      {{^sameCategory}}<h3 class="list-heading"> {{category}} </h3> {{/sameCategory}}\
         <li class="list-item" id="{{code}}"> \
           <span class="code-badge">{{code}}</span> \
           <span class="list-item-title">{{name}}</span> \
@@ -133,7 +118,7 @@ function clickItem(e) {
       stickyFooter: false,
       closeMethods: ['overlay', 'button', 'escape'],
       closeLabel: "Close",
-      cssClass: ['custom-class-1', 'custom-class-2'],
+      cssClass: ['country-modal'],
       beforeClose: function() {
           // here's goes some logic
           // e.g. save content before closing the modal
@@ -147,6 +132,8 @@ function clickItem(e) {
 
   // open modal
   modal.open();
+
+  var myDropzone = new Dropzone(".country-modal .dropzone", { url: "/file/post"});
 
 }
 
@@ -172,7 +159,10 @@ function modalTemplate(country) {
       <dd class="section-content">{{value}}</dd> \
     </div> \
     {{/sections}} \
-  </div>';
+  </div> \
+  <form action="/upload" class="dropzone needsclick dz-clickable" id="image-upload">\
+    <div class="dz-message needsclick"> Drop files here or click to upload.</div> \
+  </form>';
   var html = Mustache.to_html(template, moustacheSections);
 
   return html;
@@ -181,7 +171,18 @@ function modalTemplate(country) {
 
 
 function viewGrid() {
-  countryData.sort(byName);
+  createList(countryData.sort(byCategory));
+  document.getElementById("main-list").classList.remove('list-view');
+  document.getElementById("main-list").classList.add('grid-view');
+}
+
+function viewList() {
+  createList(countryData.sort(byName));
+  document.getElementById("main-list").classList.add('list-view');
+  document.getElementById("main-list").classList.remove('grid-view');
+}
+
+function sortList() {
 
 }
 
@@ -284,4 +285,28 @@ function removeItem(event) {
    if (a.name > b.name)
      return 1;
    return 0;
+ }
+
+
+ function splitIntoCategories(data) {
+   //first make list of categories
+   var categoryList = [];
+   data.map(function(item){
+     if(categoryList.indexOf(item.category)==-1) {
+       // new category, so make new list
+       categoryList.push(item.category);
+     }
+   });
+   var dataInCategories = [];
+   categoryList.map(function(category){
+     var itemsInCategory = [];
+     data.map(function(item) {
+         if(item.category==category){
+           itemsInCategory.push(item);
+         }
+     })
+     dataInCategories.push(itemsInCategory);
+     //document.getElementById('main-list').appendChild(makeUL(itemsInCategory));
+   })
+   return dataInCategories;
  }

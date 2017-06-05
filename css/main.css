@@ -228,6 +228,25 @@ ul.list {
   overflow: hidden;
 }
 
+.list-view {
+  margin-top: 20px;
+}
+.list-view .list li {
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  font-family: 'Open sans', 'Helvetica Neue', sans-serif;
+  font-size: 1em;
+  text-transform: none;
+}
+.list-view .list li:hover {
+  text-decoration: underline;
+}
+.list-view .code-badge, .list-view .list h3 {
+  display: none;
+}
+
+
 .code-badge{
   background-color: #2E2525;
   color: #fff;
@@ -278,6 +297,7 @@ img.close-img {
   margin: 0 5px;
   width: auto;
   cursor: auto;
+  background: transparent;
 }
 .tingle-modal-box .code-badge {
   font-size: 0.6em;
@@ -313,6 +333,26 @@ dd.section-content {
     width: 72%;
     float: right;
     margin: 0;
+}
+
+
+.dropzone.dz-clickable {
+    cursor: pointer;
+}
+.dropzone {
+    border: 2px dashed #0087F7;
+    border-radius: 5px;
+    background: white;
+    min-height: 150px;
+    padding: 54px 54px;
+}
+.dropzone, .dropzone * {
+    box-sizing: border-box;
+}
+.dropzone .dz-message {
+    font-weight: 400;
+    text-align: center;
+    margin: 2em 0;
 }
 
 
