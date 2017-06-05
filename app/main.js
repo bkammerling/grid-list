@@ -17,6 +17,37 @@ firebase.database().ref('/masterSheet/').once('value').then(function(snapshot){
   countryData = dataArray;
 });
 
+// Navigo routing setup
+var root = null;
+var useHash = false; // Defaults to: false
+var hash = '#!'; // Defaults to: '#'
+var el = function (sel) {
+  return document.querySelector(sel);
+};
+var setContent = function (id, content) {
+  el('.js-content').innerHTML = content || el('#content-' + id).innerHTML;
+};
+var router = new Navigo(root, useHash);
+
+router.on('/:countryName', function (name) {
+  var id = 'single';
+  var content = el('#content-' + id).innerHTML;
+  var params;
+  for(var i in countryData) {
+    console.log(countryData[i].name, name);
+    if(countryData[i].name==name.countryName) params = countryData[i];
+  }
+  console.log(params);
+  Object.keys(params).forEach(function (key) {
+    content = content.replace(new RegExp('{{' + key + '}}', 'g'), params[key]);
+  });
+  setContent(id, content);
+});
+router.on(function () {
+  setContent('list');
+});
+router.resolve();
+
 var editMode = false;
 const listArea = document.getElementById('main-list');
 
@@ -43,8 +74,9 @@ function createList(data) {
   listArea.innerHTML = makeUL(data);
   var items = document.getElementsByClassName('list-item');
   Array.from(items).forEach(function(element) {
-    element.addEventListener('click', clickItem, false);
+    //element.addEventListener('click', clickItem, false);
   });
+  router.updatePageLinks()
 }
 
 
@@ -63,7 +95,7 @@ function makeUL(array) {
     '<div class="list-container"> \
       <ul class="list">{{#countryList}} \
       {{^sameCategory}}<h3 class="list-heading"> {{category}} </h3> {{/sameCategory}}\
-        <li class="list-item" id="{{code}}"> \
+        <li href="{{name}}" data-navigo class="list-item" id="{{code}}"> \
           <span class="code-badge">{{code}}</span> \
           <span class="list-item-title">{{name}}</span> \
         </li> \
