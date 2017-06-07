@@ -14,12 +14,11 @@
         <link rel="stylesheet" href="../css/main.css">
 
         <script src="../js/vendor/modernizr-2.8.3.min.js"></script>
-        <script src="../js/vendor/navigo.min.js"></script>
         <script src="../node_modules/tingle.js/dist/tingle.min.js"></script>
         <script src="../node_modules/holmes.js/js/holmes.js"></script>
         <script src="../node_modules/mustache/mustache.min.js"></script>
-        <script src="../js/vendor/dropzone.js"></script>
-
+        <script src="../node_modules/then-request/dist/request.min.js"></script>
+        
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -40,7 +39,7 @@
 
 
           <div class="input-area">
-            <input class="searchbar" type="search" />
+            <input class="searchbar" id="main-search" type="search" />
             <img src='./img/grid.svg' id="view-grid" alt="4 blocks - to view grid" class='input-icon' />
             <img src='./img/list.svg' id="view-list" alt="3 horizontal lines blocks - to view list" class='input-icon' />
             <img src='./img/daterange.svg' id="sort-list" alt="a to z - to sort" class='input-icon' />
@@ -50,18 +49,9 @@
           </div>
 
           <div id="dataArea">
+            <div id="loading-spinner"><img src="./img/spinner2.gif" /></div>
             <div class="" id="main-list"></div>
           </div>
-
-          <script type="text/content" id="content-list">
-            <p class="big">End of list !!!</p>
-          </script>
-
-          <script type="text/content" id="content-single">
-            <small>(The content of this page is based on the URL)</small>
-            <p class="big">They speak {{language}} in {{name}} !!!</p>
-          </script>
-
 
         </div>
 

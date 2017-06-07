@@ -184,6 +184,14 @@ input.searchbar {
   display: block;
 }
 
+#loading-spinner {
+  text-align: center;
+  margin: 30px;
+}
+#loading-spinner img {
+  max-width: 40px;
+}
+
 
 /*
 * styles for MAIN CONTENT area
@@ -198,8 +206,11 @@ input.searchbar {
   background-position: top;
   background-size: 4px 2px;
   background-repeat: repeat-x;
-
 }
+.list-container h3.hide {
+  display: none;
+}
+
 
 ul.list {
     list-style: none;
@@ -223,7 +234,7 @@ ul.list {
 }
 
 .list li {
-  width: calc(20% - 6px);
+  width: calc(20% - 10px);
   white-space: nowrap;
   overflow: hidden;
 }
@@ -295,7 +306,7 @@ img.close-img {
   font-size: 1.5em;
   padding: 0;
   margin: 0 5px;
-  width: auto;
+  width: 100%;
   cursor: auto;
   background: transparent;
 }
@@ -305,9 +316,10 @@ img.close-img {
 
 
 .country-info {
-  width: 100%;
+  width: 50%;
+  float: left;
   font-size: 0.8em;
-  margin-top: 15px;
+  margin: 15px 0 25px;
   padding: 0 1rem;
 }
 
@@ -336,6 +348,51 @@ dd.section-content {
 }
 
 
+#images-container {
+  width: 50%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.image-container {
+  margin: 5px;
+  position: relative;
+}
+.image-container img {
+  max-height: 50vh;
+}
+.image-container .remove-cross {
+  position: absolute;
+  border-radius: 50%;
+  background-color: #6d0000;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  text-align: center;
+  font-size: 13px;
+  top: -4px;
+  right: -4px;
+  opacity: 0;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.image-container:hover .remove-cross {
+  opacity: 1;
+}
+
+
+.tingle-modal #file-upload {
+    display: block;
+    width: 50%;
+    float: right;
+    margin: 15px auto 0;
+    padding: 10px 0 0 35px;
+    border-top: 1px solid #b1b1b1;
+  }
+
+
 .dropzone.dz-clickable {
     cursor: pointer;
 }
@@ -349,7 +406,7 @@ dd.section-content {
 .dropzone, .dropzone * {
     box-sizing: border-box;
 }
-.dropzone .dz-message {
+.dropzone {
     font-weight: 400;
     text-align: center;
     margin: 2em 0;
@@ -402,13 +459,30 @@ footer ul li:hover {
   .list li {
     width: calc(20% - 9px);
   }
+  #images-container {
+    flex-direction: row;
+  }
 }
 
 
 @media (max-width: 1200px) {
   .list li {
-    width: calc(25% - 9px);
+    width: calc(25% - 10px);
   }
+
+  .country-info {
+    width: 100%;
+  }
+  #images-container {
+    width: 100%;
+    flex-direction: row;
+  }
+  .tingle-modal #file-upload {
+    width: 100%;
+    float: none;
+  }
+
+
 }
 
 
@@ -416,11 +490,18 @@ footer ul li:hover {
   .list li {
     width: calc(33.33% - 9px);
   }
+
 }
 
 @media (max-width: 650px) {
   .list li {
     width: calc(50% - 9px);
+  }
+}
+
+@media (max-width: 540px) {
+.tingle-modal-box {
+    width: auto;
   }
 }
 

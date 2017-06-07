@@ -29,7 +29,7 @@ module.exports = {
       { from: 'node_modules/tingle.js/dist/tingle.min.js', to: 'js/'},
       { from: 'node_modules/holmes.js/js/holmes.js', to: 'js/'},
       { from: 'node_modules/mustache/mustache.min.js', to: 'js/'},
-      { from: 'js/vendor/tinysort.min.js', to: 'js/'},
+      { from: 'node_modules/then-request/dist/request.min.js', to: 'js/'},
       { from: 'css/normalize.min.css', to: 'css/'},
       { from: 'node_modules/tingle.js/dist/tingle.min.css', to: 'css/'},
       { from: 'css/', to: 'css/'}
@@ -39,12 +39,12 @@ module.exports = {
       'js/tingle.min.js',
       'js/holmes.js',
       'js/mustache.min.js',
-      'js/tinysort.min.js',
+      'js/request.min.js',
       'css/normalize.min.css',
       'css/tingle.min.css',
       'css/MyFontsTradeGothic.css',
       'css/main.css'
-    ], append: true })
+    ], append: false })
 
   ]
 
