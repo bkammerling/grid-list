@@ -1,203 +1,187 @@
-//Add in your database secret
-var secret = 'n35BEKLCSbZ2byImSGBfS0KY3eT3ekhjqBROWSGp';
-var firebaseURL = 'https://knowledge-database-87320.firebaseio.com/'
-var spreadsheetId='1i3kmPg9XTaeFZN6pCbqYEUm_A9G23wg3nWlmZFX6eEQ';
-
-
-function syncMasterSheet(excelData) {
-  var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-  base.setData("masterSheet", excelData);
-}
-
-function startSync() {
-  //Get the currently active sheet
-  var sheet = SpreadsheetApp.getActiveSheet();
-  //Get the number of rows and columns which contain some content
-  var [rows, columns] = [sheet.getLastRow(), sheet.getLastColumn()];
-  //Get the data contained in those rows and columns as a 2 dimensional array
-  var data = sheet.getRange(1, 1, rows, columns).getValues();
-  Logger.log(data);
-  var dataObject = {};
-  //Loop through the rows creating a new object for eachone
-  for(var i=1; i < data.length; i++) {
-    var dataRow = data[i];
-    var name = dataRow[0];
-    var code = dataRow[1];
-    dataObject[code + '-' + name] = {
-      name:name,
-      code:code,
-      category:dataRow[2]
-    };
-    //Loop through the column of each row, adding the key-values to the dataObject
-    for(var j=3; j<dataRow.length; j++) {
-      var dataCell = dataRow[j].toString();
-      if(dataCell.indexOf(': ')!=-1) {
-        var property = dataCell.split(':',2)[0];
-        var value = dataCell.split(':',2)[1];
-        value = value.trim();
-        dataObject[code + '-' + name][property] = value;
-      } else {
-        dataObject[code + '-' + name][j] = dataCell;
-      }
-    }
-
-  }
-
-  //Use the syncMasterSheet function defined before to push this data to the "masterSheet" key in the firebase database
-  syncMasterSheet(dataObject);
-}
-
-function onEdit(e) {
-
-}
-
-function onOpen(e) {
-
-  getAllData();
-
-}
-
-function getAllData() {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var sheetObject = [];
-  var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-  var data = base.getData("masterSheet");
-  for(var i in data) {
-    //sheetObject
-  }
-}
-
-function doPost(e) {
-  // Access your spreadsheet and its data:
-  var kdbSheet = SpreadsheetApp.openById(spreadsheetId);
-  var dataSheet = kdbSheet.getSheets()[0];
-  var [rows, columns] = [dataSheet.getLastRow(), dataSheet.getLastColumn()];
-  var data = dataSheet.getRange(1, 1, rows, columns).getValues();
-  Logger.log(data);
-
-}
-
-function doGet(e){
-  // this prevents concurrent access overwritting data
-  // [1] http://googleappsdeveloper.blogspot.co.uk/2011/10/concurrency-and-google-apps-script.html
-  // we want a public lock, one that locks for all invocations
-  var lock = LockService.getPublicLock();
-  var success = lock.tryLock(10000);
-  if (!success) {
-    Logger.log('Could not obtain lock after 10 seconds.');
-    return ContentService
-      .createTextOutput(JSON.stringify({"result":"lockerror", "error": e}))
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-
-
-  try {
-
-    var sheet = SpreadsheetApp.getActiveSheet();
-    var sheetObject = [];
-    var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-    var data = base.getData("masterSheet/" + e.parameter.cid + "/");
-    for(var i in data) {
-      //sheetObject
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({"result":e.parameter.cid})).setMimeType(ContentService.MimeType.JAVASCRIPT);
-
-
-  } catch(e) {
-    //Logger.error('deGet() yielded an error: ' + e);
-    // if error return this
-    return ContentService
-          .createTextOutput(JSON.stringify({"result":"error", "error": e}))
-          .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  } finally { //release lock
-    lock.releaseLock();
-  }
-
-
- }
-
-//27/08
-//Add in your database secret
-var secret = 'n35BEKLCSbZ2byImSGBfS0KY3eT3ekhjqBROWSGp';
-var firebaseURL = 'https://knowledge-database-87320.firebaseio.com/'
-
+//Add in your database
+var firebaseURL = 'https://kdb-test.firebaseio.com/'
 var spreadsheetId='15OW-QLUUy5R7MtXS1OFD1qXl_K8764XnHY9IyUR626o';
 
+var alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
-function syncMasterSheet(excelData) {
-  var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-  base.setData("testerSheet", excelData);
-}
+function importFBData() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ss.toast("Getting latest data from Knowledge Database");
 
-function startSync() {
-  //Get the currently active sheet
-  var sheet = SpreadsheetApp.getActiveSheet();
-  //Get the number of rows and columns which contain some content
-  var [rows, columns] = [sheet.getLastRow(), sheet.getLastColumn()];
-  //Get the data contained in those rows and columns as a 2 dimensional array
-  var data = sheet.getRange(1, 1, rows, columns).getValues();
+  var kdbDoc = SpreadsheetApp.openById(spreadsheetId);
+  var sheetname = "Sheet1"
+  var base = FirebaseApp.getDatabaseByUrl(firebaseURL);
+  var data = base.getData("testerSheet");
+  // clean ordered object properties from 'aName', 'bCountry' etc to name, country etc.
+  data.shift();
   Logger.log(data);
-  var dataObject = {};
-  //Loop through the rows creating a new object for each one
-  for(var i=1; i < data.length; i++) {
-    var dataRow = data[i];
-    var name = dataRow[0];
-    var code = dataRow[1];
-    dataObject[code + '-' + name] = {
-      name:name,
-      code:code,
-      category:dataRow[2]
-    };
-    //Loop through the column of each row, adding the key-values to the dataObject
-    for(var j=3; j<dataRow.length; j++) {
-      var dataCell = dataRow[j].toString();
-      var colonPosition = dataCell.indexOf(':');
-      if(colonPosition!=-1) {
-        var property = dataCell.slice(0,colonPosition);
-        var value = dataCell.slice(colonPosition+1);
-        value = value.trim();
-        if(property=='images') {
-          value = value.split(",");
-        }
-        dataObject[code + '-' + name][property] = value;
-      } else {
-        dataObject[code + '-' + name][j] = dataCell;
-      }
-    }
+  var doc = SpreadsheetApp.getActiveSpreadsheet();
+  var temp = doc.getSheetByName("TMP");
 
+  if (!doc.getSheetByName(sheetname)){
+    var sheet = doc.insertSheet(sheetname, {template:temp});
+  } else {
+    var sheet = doc.getSheetByName(sheetname);
+    sheet.getRange(2, 1, sheet.getLastRow(), sheet.getMaxColumns()).clear({contentsOnly:true});
   }
+  insertData(sheet,data);
+}
 
-  //Use the syncMasterSheet function defined before to push this data to the "masterSheet" key in the firebase database
-  syncMasterSheet(dataObject);
+function insertData(sheet, data){
+  Logger.log('in insertData');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (data.length>0){
+    ss.toast("Found "+data.length+" rows");
+    sheet.insertRowsAfter(1, data.length);
+    setRowsData(sheet, data);
+  } else {
+    Logger.log('no data');
+    ss.toast("All done");
+  }
 }
 
 
+// setRowsData fills in one row of data per object defined in the objects Array.
+// For every Column, it checks if data objects define a value for it.
+// Arguments:
+//   - sheet: the Sheet Object where the data will be written
+//   - objects: an Array of Objects, each of which contains data for a row
+//   - optHeadersRange: a Range of cells where the column headers are defined. This
+//     defaults to the entire first row in sheet.
+//   - optFirstDataRowIndex: index of the first row where data should be written. This
+//     defaults to the row immediately below the headers.
+function setRowsData(sheet, objects, optHeadersRange, optFirstDataRowIndex) {
+  Logger.log('in setRowsData');
 
-function onOpen(e) {
+  var headersRange = optHeadersRange || sheet.getRange(1, 1, 1, sheet.getMaxColumns());
+  var firstDataRowIndex = optFirstDataRowIndex || headersRange.getRowIndex() + 1;
+  var headers = headersRange.getValues()[0]; //normalizeHeaders(headersRange.getValues()[0]);
 
-  // getAllData();
-
-}
-
-
-function getAllData() {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var sheetObject = [];
-  var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-  var data = base.getData("masterSheet");
-
-  for (var i = 0; i < data.length; ++i) {
+  var data = [];
+  for (var i = 0; i < objects.length; ++i) {
     var values = []
     for (j = 0; j < headers.length; ++j) {
       var header = headers[j];
-      values.push(header.length > 0 && objects[i][header] ? objects[i][header] : "");
+      //if(header == 'name' || header == 'code' || header == 'category') header = normalizeHeader(header);
+      if(header == 'images') {
+        values.push(header.length > 0 && objects[i][header] ? objects[i][header].toString() : "");
+      } else {
+        values.push(header.length > 0 && objects[i][header] ? objects[i][header] : "");
+      }
     }
     data.push(values);
   }
   var destinationRange = sheet.getRange(firstDataRowIndex, headersRange.getColumnIndex(),
                                         objects.length, headers.length);
   destinationRange.setValues(data);
+}
+
+// getRowsData iterates row by row in the input range and returns an array of objects.
+// Each object contains all the data for a given row, indexed by its normalized column name.
+// Arguments:
+//   - sheet: the sheet object that contains the data to be processed
+//   - range: the exact range of cells where the data is stored
+//   - columnHeadersRowIndex: specifies the row number where the column names are stored.
+//       This argument is optional and it defaults to the row immediately above range;
+// Returns an Array of objects.
+function getRowsData(sheet, range, columnHeadersRowIndex) {
+  Logger.log('in getRowsData');
+
+  columnHeadersRowIndex = columnHeadersRowIndex || range.getRowIndex() - 1;
+  var numColumns = range.getEndColumn() - range.getColumn() + 1;
+  var headersRange = sheet.getRange(columnHeadersRowIndex, range.getColumn(), 1, numColumns);
+  var headers = headersRange.getValues()[0];
+  return getObjects(range.getValues(), headers);
+}
+
+function sendData() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var sheetData = ss.getDataRange();
+  var dataObject = getRowsData(sheet, sheetData, 1);
+  syncMasterSheet(dataObject);
+}
+
+// For every row of data in data, generates an object that contains the data. Names of
+// object fields are defined in keys.
+// Arguments:
+//   - data: JavaScript 2d array
+//   - keys: Array of Strings that define the property names for the objects to create
+function getObjects(data, keys) {
+  var objects = [];
+  // start from 1 to skip the header row, or from 0 to include it
+  for (var i = 0; i < data.length; ++i) {
+    var object = {};
+    var hasData = false;
+    // i is the rows
+    for (var j = 0; j < data[i].length; ++j) {
+      //j is the columns
+      var cellData = data[i][j];
+      if (isCellEmpty(cellData)) {
+        continue;
+      }
+      if(keys[j]=='images') {
+        cellData = cellData.split(",");
+      }
+      if(i == 0) {
+        //add headers as 0,1,2 for ordering on K.DB
+        object[j] = cellData;
+      } else {
+        object[keys[j]] = cellData;
+      }
+      //object[alphabet[j]+keys[j]] = cellData;
+      hasData = true;
+    }
+    if (hasData) {
+      objects.push(object);
+    }
+  }
+  return objects;
+}
+
+
+// Returns true if the cell where cellData was read from is empty.
+// Arguments:
+//   - cellData: string
+function isCellEmpty(cellData) {
+  return typeof(cellData) == "string" && cellData == "";
+}
+
+// Returns true if the character char is alphabetical, false otherwise.
+function isAlnum(char) {
+  return char >= 'A' && char <= 'Z' ||
+    char >= 'a' && char <= 'z' ||
+    isDigit(char);
+}
+
+// Returns true if the character char is a digit, false otherwise.
+function isDigit(char) {
+  return char >= '0' && char <= '9';
+}
+// http://jsfromhell.com/array/chunk
+function chunk(a, s){
+    for(var x, i = 0, c = -1, l = a.length, n = []; i < l; i++)
+        (x = i % s) ? n[c][x] = a[i] : n[++c] = [a[i]];
+    return n;
+}
+
+function cleanProps(item) {
+  // as object uses the first character to order it, slice this from
+  // each key in each item of the object. aName -> Name.
+  for (var key in item) {
+    if (item.hasOwnProperty(key)) {
+      item[key.slice(1)] = item[key];
+      // create new element in object with renamed key. Then delete old element.
+      delete item[key];
+    }
+  }
+  return item;
+}
+
+
+function syncMasterSheet(dataObject) {
+  var base = FirebaseApp.getDatabaseByUrl(firebaseURL);
+  base.setData("testerSheet", dataObject);
 }
 
 
@@ -218,40 +202,19 @@ function doGet(e){
 
 
   try {
-
     var kdbSheet = SpreadsheetApp.openById(spreadsheetId);
     var sheet = kdbSheet.getSheets()[0];
 
-    //var sheetObject = [];
-    var base = FirebaseApp.getDatabaseByUrl(firebaseURL, secret);
-    var fbData = base.getData("masterSheet/" + e.parameter.cid + "/");
-    //var fbData = base.getData("masterSheet/AG-Algeria/");
-
-    var row = [];
-    // first push our main properties into the row
-    row.push(fbData['name']);
-    row.push(fbData['code']);
-    row.push(fbData['category']);
-    for(var prop in fbData) {
-    // turn {key:value} into "key: value"
-      if(!isNaN(prop)) {
-        var property = '';
-      } else {
-        property = prop+": ";
-      }
-      if(fbData[prop].length>1 && prop!='name' && prop!='code' && prop!='category' && prop!='images') {
-        row.push(property + fbData[prop]);
-        Logger.log(property + fbData[prop]);
-       }
-    }
-    if(typeof fbData['images'] !== 'undefined') {
-      var imagesString = "images: "+fbData['images'].toString();
-      row.push(imagesString);
-    }
+    var base = FirebaseApp.getDatabaseByUrl(firebaseURL);
+    var fbData = base.getData("testerSheet/" + e.parameter.cid + "/");
+    //var fbData = base.getData("testerSheet/17/");
+    //Logger.log(fbData);
+    var countryObject = fbData;
 
     // find the right row with fbData.name
     var sheetData = sheet.getDataRange().getValues();
-    var countryName = fbData.name;
+    var countryName = countryObject.name;
+    Logger.log(countryName);
     var rowNumber = null;
     for(var i = 0; i<sheetData.length; i++){
       if(sheetData[i][0] == countryName){ //[0] because column A
@@ -260,8 +223,11 @@ function doGet(e){
       }
     }
 
-    sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
+    // setRowsData function needs the sheet, an array of data, headers will be found
+    // in function so undefined here and finally our row number.
+    if(rowNumber) setRowsData(sheet, [countryObject], undefined, rowNumber);
 
+    // Let web service know it was a success with the return
     return ContentService.createTextOutput(JSON.stringify({"result":countryName,"rowNumber":rowNumber})).setMimeType(ContentService.MimeType.JAVASCRIPT);
 
 
