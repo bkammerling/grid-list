@@ -91,7 +91,7 @@ h1, h2, h3, h4 {
 .logo-container {
   float: right;
   margin-bottom: 5px;
-  max-width: 60%;
+  max-width: 75%;
   width: 250px;
 }
 
@@ -206,6 +206,8 @@ input.searchbar {
   background-position: top;
   background-size: 4px 2px;
   background-repeat: repeat-x;
+
+  width:100%;
 }
 .list-container h3.hide {
   display: none;
@@ -216,7 +218,14 @@ ul.list {
     list-style: none;
     padding: 0;
     position: relative;
-    margin-top: 0;
+    margin-top: 20px;
+
+    display: flex;
+    max-width: 100%;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    align-content: stretch;
 }
 
 .list li, .tingle-modal-box h3 {
@@ -228,15 +237,31 @@ ul.list {
   font-family: 'TradeGothicLTPro-BdCn20';
   font-size: 1.3em;
   text-transform: uppercase;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease-in-out;
 
 }
 
 .list li {
-  width: calc(20% - 10px);
+  min-width: calc(20% - 10px);
   white-space: nowrap;
   overflow: hidden;
+  flex: 1 0 auto;
+}
+
+.list li:hover {
+  background: #ceced1;
+  border-color: #bbb6b6;
+}
+
+.list li.cat-Africa .code-badge {
+  background: #878786;
+}
+.list li.cat-Europe .code-badge {
+}
+.list li.cat-Middle.East .code-badge {
+  background: #5ACBCE;
 }
 
 .list-view {
@@ -247,18 +272,22 @@ ul.list {
   background: transparent;
   padding: 0;
   font-family: 'Open sans', 'Helvetica Neue', sans-serif;
-  font-size: 1em;
+  font-size: 1.2em;
   text-transform: none;
 }
 .list-view .list li:hover {
+  border-color: transparent;
+}
+.list-view .list li:hover span {
   text-decoration: underline;
 }
+
 .list-view .code-badge, .list-view .list h3 {
   display: none;
 }
 
 
-.code-badge{
+.code-badge {
   background-color: #2E2525;
   color: #fff;
   font-weight: bold;
@@ -266,15 +295,19 @@ ul.list {
   text-transform: uppercase;
   text-align: center;
   border-radius: 50%;
-  padding: 7px;
+  padding: 6px 7px;
   margin-right: 7px;
-  vertical-align: middle;
+  vertical-align: top;
   height: 30px;
   width: 30px;
   display: inline-block;
   box-sizing: border-box;
 }
 
+.list-item-title {
+    display: inline-block;
+    padding-top: 2px;
+}
 
 img.close-img {
   display: none;
@@ -339,7 +372,7 @@ img.close-img {
 dt.section-title {
     width: 28%;
     float: left;
-    padding-left: 10px;
+    padding: 0 10px 0 6px;
 }
 dd.section-content {
     width: 72%;
@@ -354,6 +387,8 @@ dd.section-content {
   flex-direction: row;
   align-items: center;
   justify-content: space-around;
+  border-bottom: 1px solid #b1b1b1;
+  padding-bottom: 20px;
 }
 
 .image-container {
@@ -383,15 +418,30 @@ dd.section-content {
 }
 
 
-.tingle-modal #file-upload {
-    display: block;
-    width: 50%;
-    float: right;
-    margin: 15px auto 0;
-    padding: 10px 0 0 35px;
-    border-top: 1px solid #b1b1b1;
-  }
+.tingle-modal .custom-file-upload {
+  display: block;
+  width: auto;
+  float: right;
+  margin: 15px auto 0;
+  padding: 10px 20px 8px;
+  font-size: 14px;
+  cursor: pointer;
 
+  box-sizing: border-box;
+  background: #ccccd5;
+  font-family: 'TradeGothicLTPro-BdCn20';
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+.tingle-modal .custom-file-upload:hover {
+  background: #c2c2c9;
+  border-color: #b7b7bb;
+}
+
+
+.tingle-modal input[type="file"] {
+    display: none;
+}
 
 .dropzone.dz-clickable {
     cursor: pointer;
@@ -426,9 +476,9 @@ footer ul {
   padding: 0;
   font-size: 0.7em;
 
-  -webkit-columns: 2;
-  -moz-columns: 2;
-  columns: 2;
+  -webkit-columns: 4;
+  -moz-columns: 4;
+  columns: 4;
   -webkit-column-gap: 2em;
   -moz-column-gap: 2em;
   column-gap: 2em;
@@ -437,7 +487,7 @@ footer ul {
 footer ul li {
   cursor: pointer;
 }
-footer ul li:hover {
+footer ul li:hover span {
   text-decoration: underline;
 }
 
@@ -457,7 +507,7 @@ footer ul li:hover {
 
 @media (min-width: 1600px) {
   .list li {
-    width: calc(20% - 9px);
+    min-width: calc(20% - 9px);
   }
   #images-container {
     flex-direction: row;
@@ -467,7 +517,7 @@ footer ul li:hover {
 
 @media (max-width: 1200px) {
   .list li {
-    width: calc(25% - 10px);
+    min-width: calc(25% - 10px);
   }
 
   .country-info {
@@ -488,14 +538,17 @@ footer ul li:hover {
 
 @media (max-width: 900px) {
   .list li {
-    width: calc(33.33% - 9px);
+    min-width: calc(33.33% - 9px);
   }
 
 }
 
 @media (max-width: 650px) {
   .list li {
-    width: calc(50% - 9px);
+    min-width: calc(50% - 9px);
+  }
+  .code-badge {
+    padding: 8px 7px;
   }
 }
 
@@ -503,12 +556,29 @@ footer ul li:hover {
 .tingle-modal-box {
     width: auto;
   }
+  .tingle-modal {
+    overflow: visible;
+  }
+
+  .tingle-modal--overflow {
+    height: calc(100% - 60px);
+  }
+
+  .tingle-modal-box {
+    height: 100%;
+  }
+
+  .tingle-modal-box__content {
+    height: 100%;
+    overflow-y: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 @media (max-width: 400px) {
   .list li {
     width: 100%;
-    margin: 0;
+    margin: 2px 0;
   }
 }
 

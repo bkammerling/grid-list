@@ -18,7 +18,7 @@
         <script src="../node_modules/holmes.js/js/holmes.js"></script>
         <script src="../node_modules/mustache/mustache.min.js"></script>
         <script src="../node_modules/then-request/dist/request.min.js"></script>
-        
+
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -40,10 +40,10 @@
 
           <div class="input-area">
             <input class="searchbar" id="main-search" type="search" />
-            <img src='./img/grid.svg' id="view-grid" alt="4 blocks - to view grid" class='input-icon' />
+            <img src='./img/grid.svg' id="view-grid" alt="4 blocks - to view grid" class='active input-icon' />
             <img src='./img/list.svg' id="view-list" alt="3 horizontal lines blocks - to view list" class='input-icon' />
-            <img src='./img/daterange.svg' id="sort-list" alt="a to z - to sort" class='input-icon' />
-            <div id='add-button'>
+            <img src='./img/daterange.svg' id="sort-list" style="display: none;" alt="a to z - to sort" class='input-icon' />
+            <div id='add-button' style="display: none;">
               <span>+</span>
             </div>
           </div>

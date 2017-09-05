@@ -1,22 +1,45 @@
+/*
 var config = {
   apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
   databaseURL: "https://knowledge-database-87320.firebaseio.com",
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
+};*/
+// Initialize TESTING Firebase
+var config = {
+  apiKey: "AIzaSyCOnG9vQhWLjHc1ghnCVZB4SlX_ecS7Z3w",
+  authDomain: "kdb-test.firebaseapp.com",
+  databaseURL: "https://kdb-test.firebaseio.com",
+  projectId: "kdb-test",
+  storageBucket: "kdb-test.appspot.com",
 };
 firebase.initializeApp(config);
 
 var database = firebase.database();
 var storage = firebase.storage();
 
-var countryData;
-database.ref('/masterSheet/').once('value').then(function(snapshot){
+var countryData, properties;
+database.ref('/testerSheet/').once('value').then(function(snapshot){
   document.getElementById('loading-spinner').classList.add('hidden');
-  var fbData = snapshot.val();
-  var dataArray = Object.keys(fbData).map(function(key) { return fbData[key] });
-  createList(dataArray.sort(byCategory));
-  setupFooter(dataArray.sort(byName));
-  countryData = dataArray;
+  countryData = snapshot.val();
+  /*var dataArray = fbData.map(function(item) {
+    // as object uses the first character to order it, slice this from
+    // each key in each item of the object. aName -> Name.
+    for (var key in item) {
+      if (item.hasOwnProperty(key)) {
+        item[key.slice(1)] = item[key];
+        // create new element in object with renamed key. Then delete old element.
+        delete item[key];
+      }
+    }
+    return item;
+  });*/
+  console.log(countryData);
+  properties = countryData.shift();
+  console.log(countryData);
+  createList(countryData.sort(byCategory));
+  setupFooter(countryData.sort(byName));
+  //console.log(countryData);
 }, function(error) {
   // The Promise was rejected.
   console.error(error);
@@ -40,6 +63,24 @@ const editButton = document.getElementById('main-edit');
 const addButton = document.getElementById('add-button');
 addButton.addEventListener('click', addItem);
 
+/* to work OFFLINE
+function Get(yourUrl){
+    var Httpreq = new XMLHttpRequest(); // a new request
+    Httpreq.open("GET",yourUrl,false);
+    Httpreq.send(null);
+    return Httpreq.responseText;
+}
+var json_obj = JSON.parse(Get('/js/kdb250817.json'));
+countryData = json_obj.masterSheet;
+document.getElementById('loading-spinner').classList.add('hidden');
+var dataArray = Object.keys(countryData).map(function(key) { return countryData[key] });
+createList(dataArray.sort(byCategory));
+setupFooter(dataArray.sort(byName));
+countryData = dataArray;
+console.log(countryData);
+/* to work Offline  ends here  */
+
+
 holmes({
   input: '.searchbar', // default: input[type=search]
   find: 'ul.list li, ul.list h3', // querySelectorAll that matches each of the results individually
@@ -47,8 +88,8 @@ holmes({
 });
 
 /* add class to list headings when search bar has a value */
-document.getElementById('main-search').addEventListener("keydown", inputKeyDown);
-function inputKeyDown(e) {
+document.getElementById('main-search').addEventListener("keyup", inputKeyUp);
+function inputKeyUp(e) {
   if(e.target.value.length >= 2) return;
   var items = document.getElementsByClassName('list-heading');
   if(e.target.value != "") {
@@ -86,7 +127,7 @@ function makeUL(array) {
     '<div class="list-container"> \
       <ul class="list">{{#countryList}} \
       {{^sameCategory}}<h3 class="list-heading"> {{category}} </h3> {{/sameCategory}}\
-        <li class="list-item" id="{{code}}"> \
+        <li class="list-item cat-{{category}}" id="{{code}}"> \
           <span class="code-badge">{{code}}</span> \
           <span class="list-item-title">{{name}}</span> \
         </li> \
@@ -162,37 +203,48 @@ function clickItem(e) {
 
 }
 
-function modalTemplate(country) {
+function modalTemplate(countryObject) {
+  var country = JSON.parse(JSON.stringify(countryObject));
   var moustacheSections = { 'sections' : [], 'name': country.name, 'code': country.code };
-  if(typeof country.images !== 'undefined') {
+  delete country.name;
+  delete country.code;
+  delete country.category;
+  // if 1 image it will be string, otherwise it's an object
+  // either way we gotta clean it up
+  if(typeof country.images == 'object') {
+    country.images = cleanArray(country.images);
     moustacheSections['images'] = [];
     for(var key in country.images) {
       var imageObj = { 'key': key, 'src': country.images[key] };
       moustacheSections['images'].push(imageObj);
     }
+  } else if (typeof country.images == 'string') {
+    moustacheSections['images'] = [{ 'key':0, 'src':country.images}];
   }
-  for (var prop in country){
+
+  for (var key in properties){
+    var prop = properties[key];
     if (country.hasOwnProperty(prop) &&
         country[prop].length > 1 &&
-        prop!='name' &&
-        prop!='code' &&
-        prop!='category' &&
         prop!='images') {
       var sectionObject = {};
-      sectionObject.value = country[prop];
-      if(!isNaN(prop)) prop = '';
+      // if any links in there, lets create the anchor tag
+      sectionObject.value = replaceURLWithHTMLLinks(country[prop]);
       sectionObject.key = prop;
+      //if(!isNaN(prop)) prop = '';
       moustacheSections['sections'].push(sectionObject);
     }
   }
+
+  console.log(moustacheSections);
 
   var template =
   '<h3><span class="code-badge" id="country-code">{{code}}</span><span id="current-country">{{name}}</span></h3> \
   <div class="country-info"> \
     {{#sections}} \
     <div class="section clearfix"> \
-      <dt class="section-title">{{key}}</dt> \
-      <dd class="section-content">{{value}}</dd> \
+      <dt class="section-title">{{key}} </dt> \
+      <dd class="section-content">{{{value}}}</dd> \
     </div> \
     {{/sections}} \
   </div> \
@@ -200,7 +252,7 @@ function modalTemplate(country) {
     {{#images}} <div class="image-container"> \
     <img src="{{src}}" alt="image for {{name}}" id="{{key}}"> <span class="remove-cross">x<span></div> {{/images}} \
   </div> \
-  <input type="file" id="file-upload" name="files[]"  /> <span id="upload-text"></span>';
+  <label class="custom-file-upload" id="upload-container"><input type="file" id="file-upload" name="files[]"  />  Upload Image </label> <span id="upload-text"></span>';
   var html = Mustache.to_html(template, moustacheSections);
   return html;
 
@@ -219,30 +271,35 @@ function uploadFile() {
 
   //dynamically set reference to the file name
   var imageRef = storageRef.child('images/'+ fileName);
-
-  //put request upload file to firebase storage
-  var uploadTask = imageRef.put(file);
-  uploadTask.on('state_changed', function(snapshot){
-    // Observe state change events such as progress, pause, and resume
-    // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-    var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    uploadText.innerHTML = 'Uploading...';
-    switch (snapshot.state) {
-      case firebase.storage.TaskState.PAUSED: // or 'paused'
-        uploadText.innerHTML = 'Upload is paused';
-        break;
-      case firebase.storage.TaskState.RUNNING: // or 'running'
-        console.log('Upload is running');
-        break;
-    }
-  }, function(error) {
-    // Handle unsuccessful uploads
-    uploadText.innerHTML = 'There was an error in the upload.';
-  }, function() {
-    // Handle successful uploads on complete
-    uploadText.innerHTML = '';
-    var downloadURL = uploadTask.snapshot.downloadURL;
-    addUrlToDB(downloadURL,currentCountry);
+  imageRef.getDownloadURL().then(function(url) {
+    uploadText.innerHTML = 'File already exists in storage';
+    return;
+  }).catch(function(error) {
+    //continue as normal
+    //put request upload file to firebase storage
+    var uploadTask = imageRef.put(file);
+    uploadTask.on('state_changed', function(snapshot){
+      // Observe state change events such as progress, pause, and resume
+      // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+      var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      uploadText.innerHTML = 'Uploading file: '+file.name;
+      switch (snapshot.state) {
+        case firebase.storage.TaskState.PAUSED: // or 'paused'
+          uploadText.innerHTML = 'Upload is paused';
+          break;
+        case firebase.storage.TaskState.RUNNING: // or 'running'
+          console.log('Upload is running');
+          break;
+      }
+    }, function(error) {
+      // Handle unsuccessful uploads
+      uploadText.innerHTML = 'There was an error in the upload.';
+    }, function() {
+      // Handle successful uploads on complete
+      uploadText.innerHTML = '';
+      var downloadURL = uploadTask.snapshot.downloadURL;
+      addUrlToDB(downloadURL,currentCountry);
+    });
   });
 
 }
@@ -250,14 +307,21 @@ function uploadFile() {
 function addUrlToDB(url,currentCountry) {
   // get the current country object to add the images
   var countryObject = getCountryBy('name',currentCountry);
-  var countryId = countryObject.code+"-"+countryObject.name;
+
+  var countryIndex = countryData.findIndex(x => x.name == currentCountry);
+  countryIndex++; //to compensate for the element we shift()ed at the beginning
+  console.log("index: ",countryIndex)
   // if no images currently, create the array
   countryObject.images = countryObject.images || [];
+  if(!Array.isArray(countryObject.images)) {
+    countryObject.images = [countryObject.images]
+  }
+  console.log("images: ",countryObject.images);
   countryObject.images.push(url);
   // update database with new image
-  var countryRef = database.ref('/masterSheet/'+countryId);
+  var countryRef = database.ref('/testerSheet/'+countryIndex);
   countryRef.update(countryObject).then(function() {
-    syncData(countryId);
+    syncData(countryIndex);
   });
   // reset the modal with our new content
   var html = modalTemplate(countryObject);
@@ -273,8 +337,8 @@ function finalModalSetup(countryObject) {
   });
   document.getElementById('file-upload').addEventListener('change', uploadFile);
   // if 2 images already, hide upload button
-  if(typeof countryObject.images !== 'undefined') {
-    if(countryObject.images.length >=2) document.getElementById('file-upload').classList.add('hidden');
+  if(typeof countryObject.images == 'object') {
+    if(countryObject.images.length >=2) document.getElementById('upload-container').classList.add('hidden');
   }
 }
 
@@ -284,17 +348,19 @@ function removeImage(e) {
   var imageSrc = e.target.previousElementSibling.src;
   var countryCode = document.getElementById('country-code').innerHTML;
   var countryObject = getCountryBy('code',countryCode);
-  var countryId = countryObject.code+'-'+countryObject.name;
-  console.log(imageSrc);
+  var countryIndex = countryData.findIndex(x => x.code == countryCode);
+  countryIndex++;
+  console.log(countryIndex);
 
   var imageReference = storage.refFromURL(imageSrc);
   imageReference.delete().then(function() {
     // File deleted successfully
-    var countryRef = database.ref('/masterSheet/'+countryId+'/images/'+imageId);
-    countryRef.set(null).then(function() {
-      syncData(countryId);
-    });
     countryObject.images.splice(imageId,1);
+    var countryRef = database.ref('/testerSheet/'+countryIndex);
+    countryRef.update(countryObject).then(function() {
+      syncData(countryIndex);
+    });
+
     // reset the modal with our new content
     var html = modalTemplate(countryObject);
     modal.setContent(html);
@@ -310,12 +376,16 @@ function viewGrid() {
   createList(countryData.sort(byCategory));
   document.getElementById("main-list").classList.remove('list-view');
   document.getElementById("main-list").classList.add('grid-view');
+  listButton.classList.remove('active');
+  gridButton.classList.add('active');
 }
 
 function viewList() {
   createList(countryData.sort(byName));
   document.getElementById("main-list").classList.add('list-view');
   document.getElementById("main-list").classList.remove('grid-view');
+  gridButton.classList.remove('active');
+  listButton.classList.add('active');
 }
 
 function sortList() {
@@ -324,7 +394,9 @@ function sortList() {
 
 
 function syncData(cid) {
-  request('GET', 'https://script.google.com/macros/s/AKfycbzG2biCtXYdTxt5sLhfh1V5lE95V1ZhFVbkdcrR-Bua21zTihCa/exec?cid='+cid).done(function (res) {
+  console.log("cid: ",cid);
+  // just trigger the sheet to get new data for the 1 record
+  request('GET', 'https://script.google.com/macros/s/AKfycbzsL5z6_mHIn_hUFCzJpGy-0rt6wI8Y85sOS7uWw4aXnzAtYVY/exec?cid='+cid).done(function (res) {
     //countryData = JSON.parse(res.getBody());
     //setListData(countryData);
     console.log(res.getBody());
@@ -427,11 +499,14 @@ function getCountryBy(property,id) {
  }
 
 function byCategory(a,b) {
-  if (a.category < b.category)
+  if (a.category < b.category) {
    return -1;
-  if (a.category > b.category)
+ } else if (a.category > b.category) {
    return 1;
-  return 0;
+ } else {
+   return (a.name < b.name) ? -1 : (a.name > b.name) ? 1 : 0;
+ }
+
 }
 function byName(a,b) {
   if (a.name < b.name)
@@ -440,6 +515,22 @@ function byName(a,b) {
    return 1;
   return 0;
 }
+
+function replaceURLWithHTMLLinks(text) {
+  var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+  return text.replace(exp,"<a href='$1'>$1</a>");
+}
+
+function cleanArray(actual) {
+  var newArray = new Array();
+  for (var i = 0; i < actual.length; i++) {
+    if (actual[i]) {
+      newArray.push(actual[i]);
+    }
+  }
+  return newArray;
+}
+
 
 
 function splitIntoCategories(data) {
