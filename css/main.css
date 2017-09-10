@@ -99,25 +99,59 @@ img {
   max-width: 100%;
 }
 
-/*
-.page-nav {
-  float:right;
+body.signed-out .logo-container {
+  float: none;
+  margin: 20vh auto 0;
+  text-align: center;
+  width: auto;
+  max-width: none;
 }
-
-.page-nav span {
-  margin-left: 10px;
-}
-.page-nav span:hover {
-  cursor: pointer;
-  color: #120041;
-}
-#main-add {
+body.signed-out .input-area {
   display: none;
 }
-.editmode #main-add {
-  display: inline-block;
+body.loading .logo-container, body.loading #google-sign-in {
+    display: none;
 }
-*/
+
+.button {
+  padding: 10px 20px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  box-sizing: border-box;
+  background: #ccccd5;
+  font-family: 'TradeGothicLTPro-BdCn20';
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.button:hover {
+  background: #c2c2c9;
+  border-color: #b7b7bb;
+}
+
+body.signed-out #user-signed-in, #google-sign-in {
+  display: none;
+}
+body.signed-out:not(.loading) #google-sign-in {
+  display: block;
+  margin: 30px auto;
+}
+body.signed-out #loading-spinner {
+  display: none;
+}
+
+#user-signed-in {
+    float: left;
+    font-size: 12px;
+    margin-top: 8px;
+}
+#sign-out {
+  cursor: pointer;
+}
+#sign-out:hover {
+  text-decoration: underline;
+}
+
 
 
 /*
@@ -160,6 +194,27 @@ input.searchbar {
     opacity: 0.4;
 }
 
+#brand-selection {
+  float: right;
+  margin: 12px 8px;
+}
+
+#brand-selection .brand-logo {
+  display: inline-block;
+  opacity: 0.6;
+  filter: grayscale(0.3);
+  padding: 0 8px;
+  cursor: pointer;
+  transition: all 0.1s
+}
+#brand-selection .brand-logo:hover, #brand-selection .brand-logo.active {
+  opacity: 1;
+  filter: none();
+}
+
+#brand-selection .brand-logo img {
+  max-height: 50px;
+}
 
 #add-button {
   margin: 12px 8px;
@@ -196,6 +251,10 @@ input.searchbar {
 /*
 * styles for MAIN CONTENT area
 */
+
+#dataArea {
+  clear: both;
+}
 
 .list-container h3 {
   font-size: 0.9em;
@@ -394,6 +453,9 @@ dd.section-content {
 .image-container {
   margin: 5px;
   position: relative;
+  background-color: #ccc;
+  min-width: 20px;
+  min-height: 20px;
 }
 .image-container img {
   max-height: 50vh;
@@ -423,20 +485,8 @@ dd.section-content {
   width: auto;
   float: right;
   margin: 15px auto 0;
-  padding: 10px 20px 8px;
-  font-size: 14px;
-  cursor: pointer;
+}
 
-  box-sizing: border-box;
-  background: #ccccd5;
-  font-family: 'TradeGothicLTPro-BdCn20';
-  text-transform: uppercase;
-  border: 1px solid transparent;
-}
-.tingle-modal .custom-file-upload:hover {
-  background: #c2c2c9;
-  border-color: #b7b7bb;
-}
 
 
 .tingle-modal input[type="file"] {
@@ -539,6 +589,19 @@ footer ul li:hover span {
 @media (max-width: 900px) {
   .list li {
     min-width: calc(33.33% - 9px);
+  }
+
+  .logo-container {
+    margin: 10px 0;
+  }
+  #user-signed-in {
+    clear: both;
+    width: 100%;
+    text-align: right;
+    font-size: 10px;
+  }
+  .wrapper {
+    padding-top: 0;
   }
 
 }

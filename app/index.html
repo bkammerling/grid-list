@@ -20,16 +20,20 @@
         <script src="../node_modules/then-request/dist/request.min.js"></script>
 
     </head>
-    <body>
+    <body class="loading signed-out">
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
         <div id="main-wrapper" class="wrapper">
-          <button id="authorize-button" style="display: none;">Authorize</button>
-          <button id="signout-button" style="display: none;">Sign Out</button>
+
 
           <header>
+            <div id="user-signed-in">
+              <div id="user-info">
+                <span id="signin-name"></span> | <span id="signin-email"></span> | <span id="sign-out" class="link-style">Sign Out</span>
+              </div>
+            </div>
             <div class="page-nav">
             </div>
             <div class="logo-container">
@@ -43,13 +47,19 @@
             <img src='./img/grid.svg' id="view-grid" alt="4 blocks - to view grid" class='active input-icon' />
             <img src='./img/list.svg' id="view-list" alt="3 horizontal lines blocks - to view list" class='input-icon' />
             <img src='./img/daterange.svg' id="sort-list" style="display: none;" alt="a to z - to sort" class='input-icon' />
-            <div id='add-button' style="display: none;">
-              <span>+</span>
+            <div id='brand-selection'>
+              <a class="brand-logo" href="/?brand=monster" id="logo-monster" >
+                <img src="./img/brands/monster-logo-2.png" alt="monster logo"/>
+              </a>
+              <a class="brand-logo" href="/?brand=meatliquor" id="logo-meatliquor">
+                <img src="./img/brands/meliq-logo.png" alt="meatliquor logo"/>
+              </a>
             </div>
           </div>
 
           <div id="dataArea">
-            <div id="loading-spinner"><img src="./img/spinner2.gif" /></div>
+            <button class="button" id="google-sign-in">Sign in with Google</button>
+            <div id="loading-spinner" class="hidden"><img src="./img/spinner2.gif" /></div>
             <div class="" id="main-list"></div>
           </div>
 
@@ -63,6 +73,7 @@
         </footer>
 
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-auth.js"></script>
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-database.js"></script>
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-storage.js"></script>
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>

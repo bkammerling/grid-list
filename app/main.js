@@ -15,39 +15,118 @@ var config = {
 };
 firebase.initializeApp(config);
 
+/**
+ * Function called when clicking the Login/Logout button.
+ */
+// [START buttoncallback]
+function toggleSignIn() {
+  if (!firebase.auth().currentUser) {
+    // [START createprovider]
+    var provider = new firebase.auth.GoogleAuthProvider();
+    // [END createprovider]
+    // [START addscopes]
+    provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
+    // [END addscopes]
+    // [START signin]
+    firebase.auth().signInWithPopup(provider).then(function(result) {
+      // This gives you a Google Access Token. You can use it to access the Google API.
+      var token = result.credential.accessToken;
+      // The signed-in user info.
+      var user = result.user;
+
+    }).catch(function(error) {
+      // Handle Errors here.
+      var errorCode = error.code;
+      var errorMessage = error.message;
+      // The email of the user's account used.
+      var email = error.email;
+      // The firebase.auth.AuthCredential type that was used.
+      var credential = error.credential;
+      if (errorCode === 'auth/account-exists-with-different-credential') {
+        alert('You have already signed up with a different auth provider for that email.');
+        // If you are using multiple auth providers on your app you should handle linking
+        // the user's accounts here.
+      } else {
+        console.error(error);
+      }
+    });
+    // [END signin]
+  } else {
+    firebase.auth().signOut();
+    countryData = null;
+    listArea.innerHTML = "";
+    footerArea.innerHTML = "";
+  }
+}
+
+/**
+ * initApp handles setting up UI event listeners and registering Firebase auth listeners:
+ *  - firebase.auth().onAuthStateChanged: This listener is called when the user is signed in or
+ *    out, and that is where we update the UI.
+ */
+function initApp() {
+  // Listening for auth state changes.
+  firebase.auth().onAuthStateChanged(function(user) {
+    document.getElementsByTagName("BODY")[0].classList.remove('loading');
+    if (user) {
+      // User is signed in.
+      var displayName = user.displayName;
+      var email = user.email;
+      var photoURL = user.photoURL;
+      var uid = user.uid;
+      var providerData = user.providerData;
+      document.getElementById('signin-name').textContent = displayName;
+      document.getElementById('signin-email').textContent = email;
+      document.getElementsByTagName("BODY")[0].classList.remove('signed-out');
+      //document.getElementById('user-signed-in').classList.remove('hidden');
+      //document.getElementById('google-sign-in').classList.add('hidden');
+      getFirebaseData();
+    } else {
+      // User is signed out.
+      document.getElementsByTagName("BODY")[0].classList.add('signed-out');
+      //document.getElementById('user-signed-in').classList.add('hidden');
+      //document.getElementById('google-sign-in').classList.remove('hidden');
+    }
+  });
+  document.getElementById('google-sign-in').addEventListener('click', toggleSignIn, false);
+  document.getElementById('sign-out').addEventListener('click', toggleSignIn, false);
+}
+
+window.onload = function() {
+  initApp();
+};
+
+
+//now we can set up and get our data
 var database = firebase.database();
 var storage = firebase.storage();
 
 var countryData, properties;
-database.ref('/testerSheet/').once('value').then(function(snapshot){
-  document.getElementById('loading-spinner').classList.add('hidden');
-  countryData = snapshot.val();
-  /*var dataArray = fbData.map(function(item) {
-    // as object uses the first character to order it, slice this from
-    // each key in each item of the object. aName -> Name.
-    for (var key in item) {
-      if (item.hasOwnProperty(key)) {
-        item[key.slice(1)] = item[key];
-        // create new element in object with renamed key. Then delete old element.
-        delete item[key];
-      }
-    }
-    return item;
-  });*/
-  console.log(countryData);
-  properties = countryData.shift();
-  console.log(countryData);
-  createList(countryData.sort(byCategory));
-  setupFooter(countryData.sort(byName));
-  //console.log(countryData);
-}, function(error) {
-  // The Promise was rejected.
-  console.error(error);
-  document.getElementById('loading-spinner').innerHTML = "Yikes - can't connect to database. RETREAT!"
-});
+var brand = getURLParameter('brand') || "monster";
+brand = brand.toLowerCase();
+document.getElementById("logo-"+brand).classList.add('active');
+
+function getFirebaseData() {
+  document.getElementById('loading-spinner').classList.remove('hidden');
+  database.ref('/'+brand+'/').once('value').then(function(snapshot){
+    document.getElementById('loading-spinner').classList.add('hidden');
+    countryData = snapshot.val();
+    // remove ordering object at position [0]
+    properties = countryData.shift();
+    console.log(countryData);
+    createList(countryData.sort(byCategory));
+    setupFooter(countryData.sort(byName));
+    //console.log(countryData);
+  }, function(error) {
+    // The Promise was rejected.
+    console.error(error);
+    document.getElementById('loading-spinner').innerHTML = "Yikes - can't connect to database. RETREAT!"
+  });
+}
 
 var editMode = false;
 const listArea = document.getElementById('main-list');
+const footerArea = document.getElementById('footerData');
 
 const modal = null;
 
@@ -61,7 +140,7 @@ sortButton.addEventListener('click', sortList);
 const editButton = document.getElementById('main-edit');
 //editButton.addEventListener('click', editModeToggle);
 const addButton = document.getElementById('add-button');
-addButton.addEventListener('click', addItem);
+//addButton.addEventListener('click', addItem);
 
 /* to work OFFLINE
 function Get(yourUrl){
@@ -140,7 +219,6 @@ function makeUL(array) {
 
 
 function setupFooter(array) {
-  const footerArea = document.getElementById('footerData');
   footerArea.innerHTML = buildFooter(array);
   var items = document.getElementsByClassName('footer-item');
   Array.from(items).forEach(function(element) {
@@ -250,9 +328,9 @@ function modalTemplate(countryObject) {
   </div> \
   <div class="images" id="images-container" > \
     {{#images}} <div class="image-container"> \
-    <img src="{{src}}" alt="image for {{name}}" id="{{key}}"> <span class="remove-cross">x<span></div> {{/images}} \
+    <img src="{{src}}" alt="image for {{name}}" id="{{key}}" class="modal-image"> <span class="remove-cross">x<span></div> {{/images}} \
   </div> \
-  <label class="custom-file-upload" id="upload-container"><input type="file" id="file-upload" name="files[]"  />  Upload Image </label> <span id="upload-text"></span>';
+  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Upload Image </label> <span id="upload-text"></span>';
   var html = Mustache.to_html(template, moustacheSections);
   return html;
 
@@ -264,6 +342,7 @@ function uploadFile() {
 
   var file = document.getElementById("file-upload").files[0];
   var currentCountry = document.getElementById("current-country").innerHTML;
+  var countryObject = getCountryBy('name',currentCountry);
   var uploadText = document.getElementById('upload-text');
   var fileName = currentCountry +  "-" + file.name;
 
@@ -272,7 +351,11 @@ function uploadFile() {
   //dynamically set reference to the file name
   var imageRef = storageRef.child('images/'+ fileName);
   imageRef.getDownloadURL().then(function(url) {
-    uploadText.innerHTML = 'File already exists in storage';
+    if(countryObject.images.includes(url)) {
+      uploadText.innerHTML = 'File already exists in storage';
+    } else {
+      uploadText.innerHTML = 'File already exists in storage, want to add it to this card? <a onclick="addUrlToDB('+url+','+currentCountry+')"> YES </a>';
+    }
     return;
   }).catch(function(error) {
     //continue as normal
@@ -319,7 +402,7 @@ function addUrlToDB(url,currentCountry) {
   console.log("images: ",countryObject.images);
   countryObject.images.push(url);
   // update database with new image
-  var countryRef = database.ref('/testerSheet/'+countryIndex);
+  var countryRef = database.ref('/'+brand+'/'+countryIndex);
   countryRef.update(countryObject).then(function() {
     syncData(countryIndex);
   });
@@ -356,7 +439,7 @@ function removeImage(e) {
   imageReference.delete().then(function() {
     // File deleted successfully
     countryObject.images.splice(imageId,1);
-    var countryRef = database.ref('/testerSheet/'+countryIndex);
+    var countryRef = database.ref('/'+brand+'/'+countryIndex);
     countryRef.update(countryObject).then(function() {
       syncData(countryIndex);
     });
@@ -374,16 +457,16 @@ function removeImage(e) {
 
 function viewGrid() {
   createList(countryData.sort(byCategory));
-  document.getElementById("main-list").classList.remove('list-view');
-  document.getElementById("main-list").classList.add('grid-view');
+  listArea.classList.remove('list-view');
+  listArea.classList.add('grid-view');
   listButton.classList.remove('active');
   gridButton.classList.add('active');
 }
 
 function viewList() {
   createList(countryData.sort(byName));
-  document.getElementById("main-list").classList.add('list-view');
-  document.getElementById("main-list").classList.remove('grid-view');
+  listArea.classList.add('list-view');
+  listArea.classList.remove('grid-view');
   gridButton.classList.remove('active');
   listButton.classList.add('active');
 }
@@ -394,9 +477,9 @@ function sortList() {
 
 
 function syncData(cid) {
-  console.log("cid: ",cid);
+  console.log("cid: ",cid," sheet: ",brand);
   // just trigger the sheet to get new data for the 1 record
-  request('GET', 'https://script.google.com/macros/s/AKfycbzsL5z6_mHIn_hUFCzJpGy-0rt6wI8Y85sOS7uWw4aXnzAtYVY/exec?cid='+cid).done(function (res) {
+  request('GET', 'https://script.google.com/macros/s/AKfycbzsL5z6_mHIn_hUFCzJpGy-0rt6wI8Y85sOS7uWw4aXnzAtYVY/exec?cid='+cid+'&sheet='+brand).done(function (res) {
     //countryData = JSON.parse(res.getBody());
     //setListData(countryData);
     console.log(res.getBody());
@@ -531,6 +614,9 @@ function cleanArray(actual) {
   return newArray;
 }
 
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+}
 
 
 function splitIntoCategories(data) {
