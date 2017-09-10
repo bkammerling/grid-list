@@ -1,3 +1,4 @@
+<?php ?>
 <!doctype html>
 <html class="no-js" lang="">
     <head>
@@ -8,18 +9,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
-        <link rel="stylesheet" href="../css/normalize.min.css">
-        <link rel="stylesheet" href="../node_modules/tingle.js/dist/tingle.min.css">
-        <link rel="stylesheet" href="../css/MyFontsTradeGothic.css">
-        <link rel="stylesheet" href="../css/main.css">
 
-        <script src="../js/vendor/modernizr-2.8.3.min.js"></script>
-        <script src="../node_modules/tingle.js/dist/tingle.min.js"></script>
-        <script src="../node_modules/holmes.js/js/holmes.js"></script>
-        <script src="../node_modules/mustache/mustache.min.js"></script>
-        <script src="../node_modules/then-request/dist/request.min.js"></script>
-
-    </head>
+    <link href="css/normalize.min.css" rel="stylesheet"><link href="css/tingle.min.css" rel="stylesheet"><link href="css/MyFontsTradeGothic.css" rel="stylesheet"><link href="css/main.css" rel="stylesheet"></head>
     <body class="loading signed-out">
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
@@ -77,6 +68,6 @@
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-database.js"></script>
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-storage.js"></script>
         <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase.js"></script>
-    </body>
+    <script type="text/javascript" src="js/modernizr-2.8.3.min.js"></script><script type="text/javascript" src="js/tingle.min.js"></script><script type="text/javascript" src="js/holmes.js"></script><script type="text/javascript" src="js/mustache.min.js"></script><script type="text/javascript" src="js/request.min.js"></script><script type="text/javascript" src="app_bundle.js"></script></body>
 
 </html>

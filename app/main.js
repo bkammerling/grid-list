@@ -1,11 +1,12 @@
-/*
+
 var config = {
   apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
+  authDomain: "knowledge-database-87320.firebaseapp.com",
   databaseURL: "https://knowledge-database-87320.firebaseio.com",
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
-};*/
-// Initialize TESTING Firebase
+};
+/* Initialize TESTING Firebase
 var config = {
   apiKey: "AIzaSyCOnG9vQhWLjHc1ghnCVZB4SlX_ecS7Z3w",
   authDomain: "kdb-test.firebaseapp.com",
@@ -13,6 +14,8 @@ var config = {
   projectId: "kdb-test",
   storageBucket: "kdb-test.appspot.com",
 };
+*/
+
 firebase.initializeApp(config);
 
 /**
@@ -78,14 +81,10 @@ function initApp() {
       document.getElementById('signin-name').textContent = displayName;
       document.getElementById('signin-email').textContent = email;
       document.getElementsByTagName("BODY")[0].classList.remove('signed-out');
-      //document.getElementById('user-signed-in').classList.remove('hidden');
-      //document.getElementById('google-sign-in').classList.add('hidden');
       getFirebaseData();
     } else {
       // User is signed out.
       document.getElementsByTagName("BODY")[0].classList.add('signed-out');
-      //document.getElementById('user-signed-in').classList.add('hidden');
-      //document.getElementById('google-sign-in').classList.remove('hidden');
     }
   });
   document.getElementById('google-sign-in').addEventListener('click', toggleSignIn, false);
@@ -119,8 +118,12 @@ function getFirebaseData() {
     //console.log(countryData);
   }, function(error) {
     // The Promise was rejected.
-    console.error(error);
-    document.getElementById('loading-spinner').innerHTML = "Yikes - can't connect to database. RETREAT!"
+    if(error.toString().indexOf('permission') != -1) {
+      var text = "Permission denied. You must use a @goodhumans.co.uk email.";
+    } else {
+      text = "Yikes - couldn't connect to database."
+    }
+    document.getElementById('loading-spinner').innerHTML = text;
   });
 }
 
@@ -344,7 +347,7 @@ function uploadFile() {
   var currentCountry = document.getElementById("current-country").innerHTML;
   var countryObject = getCountryBy('name',currentCountry);
   var uploadText = document.getElementById('upload-text');
-  var fileName = currentCountry +  "-" + file.name;
+  var fileName = brand + "-" + currentCountry +  "-" + file.name;
 
   var storageRef = storage.ref();
 
@@ -354,7 +357,7 @@ function uploadFile() {
     if(countryObject.images.includes(url)) {
       uploadText.innerHTML = 'File already exists in storage';
     } else {
-      uploadText.innerHTML = 'File already exists in storage, want to add it to this card? <a onclick="addUrlToDB('+url+','+currentCountry+')"> YES </a>';
+      addUrlToDB(url, currentCountry);
     }
     return;
   }).catch(function(error) {
@@ -414,9 +417,13 @@ function addUrlToDB(url,currentCountry) {
 
 function finalModalSetup(countryObject) {
   // once dom has updated with modal, finalModalSetup runs
-  var items = document.getElementsByClassName('remove-cross');
-  Array.from(items).forEach(function(element) {
+  var removeCrossItems = document.getElementsByClassName('remove-cross');
+  Array.from(removeCrossItems).forEach(function(element) {
     element.addEventListener('click', removeImage, false);
+  });
+  var imageItems = document.getElementsByClassName('modal-image');
+  Array.from(imageItems).forEach(function(element) {
+    element.addEventListener('error', imgError, false);
   });
   document.getElementById('file-upload').addEventListener('change', uploadFile);
   // if 2 images already, hide upload button
@@ -479,7 +486,7 @@ function sortList() {
 function syncData(cid) {
   console.log("cid: ",cid," sheet: ",brand);
   // just trigger the sheet to get new data for the 1 record
-  request('GET', 'https://script.google.com/macros/s/AKfycbzsL5z6_mHIn_hUFCzJpGy-0rt6wI8Y85sOS7uWw4aXnzAtYVY/exec?cid='+cid+'&sheet='+brand).done(function (res) {
+  request('GET', 'https://script.google.com/macros/s/AKfycbzG2biCtXYdTxt5sLhfh1V5lE95V1ZhFVbkdcrR-Bua21zTihCa/exec?cid='+cid+'&sheet='+brand).done(function (res) {
     //countryData = JSON.parse(res.getBody());
     //setListData(countryData);
     console.log(res.getBody());
@@ -616,6 +623,22 @@ function cleanArray(actual) {
 
 function getURLParameter(name) {
   return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+}
+
+function imgError(e) {
+  var image = e.target;
+  var currentCountry = document.getElementById('current-country').innerHTML;
+  var countryObject = getCountryBy('name',currentCountry);
+  var countryIndex = countryData.findIndex(x => x.name == currentCountry);
+  countryIndex++; //to compensate for the element we shift()ed at the beginning
+
+  countryObject.images.splice(image.id,1);
+  var countryRef = database.ref('/'+brand+'/'+countryIndex);
+  countryRef.update(countryObject).then(function() {
+    syncData(countryIndex);
+  });
+  image.parentNode.outerHTML = "";
+  finalModalSetup(countryObject);
 }
 
 
