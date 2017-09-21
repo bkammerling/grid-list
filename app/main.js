@@ -27,9 +27,8 @@ function toggleSignIn() {
     // [START createprovider]
     var provider = new firebase.auth.GoogleAuthProvider();
     // [END createprovider]
-    // [START addscopes]
-    provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-    // [END addscopes]
+    provider.addScope('profile');
+    provider.addScope('email');
     // [START signin]
     firebase.auth().signInWithPopup(provider).then(function(result) {
       // This gives you a Google Access Token. You can use it to access the Google API.
