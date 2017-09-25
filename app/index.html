@@ -7,17 +7,17 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async>
         <link rel="stylesheet" href="../css/normalize.min.css">
         <link rel="stylesheet" href="../node_modules/tingle.js/dist/tingle.min.css">
-        <link rel="stylesheet" href="../css/MyFontsTradeGothic.css">
+        <link rel="stylesheet" href="../css/MyFontsTradeGothic.css" async>
+        <link rel="stylesheet" href="../css/fontello/fontello.css" async>
         <link rel="stylesheet" href="../css/main.css">
 
         <script src="../js/vendor/modernizr-2.8.3.min.js"></script>
         <script src="../node_modules/tingle.js/dist/tingle.min.js"></script>
         <script src="../node_modules/holmes.js/js/holmes.js"></script>
         <script src="../node_modules/mustache/mustache.min.js"></script>
-        <script src="../node_modules/then-request/dist/request.min.js"></script>
 
     </head>
     <body class="loading signed-out">
@@ -33,6 +33,12 @@
               <div id="user-info">
                 <span id="signin-name"></span> | <span id="signin-email"></span> | <span id="sign-out" class="link-style">Sign Out</span>
               </div>
+              <!-- Rounded switch -->
+              <span class="switch-label">Edit mode</span>
+              <label class="switch">
+                <input type="checkbox" id="edit-button">
+                <span class="slider round"></span>
+              </label>
             </div>
             <div class="page-nav">
             </div>
@@ -60,6 +66,7 @@
           <div id="dataArea">
             <button class="button" id="google-sign-in">Sign in with Google</button>
             <div id="loading-spinner" class="hidden"><img src="./img/spinner2.gif" /></div>
+            <h4 id="breadcrumbs" class="hidden"><span id="current-brand"></span><span id="second-level"></span></h4>
             <div class="" id="main-list"></div>
           </div>
 

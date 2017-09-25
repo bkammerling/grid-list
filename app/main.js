@@ -1,11 +1,19 @@
 
-var config = {
+const config = {
   apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
   authDomain: "knowledge-database-87320.firebaseapp.com",
   databaseURL: "https://knowledge-database-87320.firebaseio.com",
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
 };
+var brandData, countryData, currentData, properties, editMode;
+const brand = getURLParameter('brand') || "monster";
+brand = brand.toLowerCase();
+document.getElementById("logo-"+brand).classList.add('active');
+document.getElementById("current-brand").innerHTML = brand;
+document.getElementById("current-brand").addEventListener('click',getBrandData,false);
+var page = getURLParameter('page') || null;
+
 /* Initialize TESTING Firebase
 var config = {
   apiKey: "AIzaSyCOnG9vQhWLjHc1ghnCVZB4SlX_ecS7Z3w",
@@ -55,7 +63,7 @@ function toggleSignIn() {
     // [END signin]
   } else {
     firebase.auth().signOut();
-    countryData = null;
+    brandData = null;
     listArea.innerHTML = "";
     footerArea.innerHTML = "";
   }
@@ -94,27 +102,32 @@ window.onload = function() {
   initApp();
 };
 
+window.addEventListener('popstate', function(e) {
+  // e.state is equal to the data-attribute of the last image we clicked
+  console.log('state:', e.state);
+  goToPage(e.state.brand, e.state.page);
+});
+
+
 
 //now we can set up and get our data
-var database = firebase.database();
-var storage = firebase.storage();
-
-var countryData, properties;
-var brand = getURLParameter('brand') || "monster";
-brand = brand.toLowerCase();
-document.getElementById("logo-"+brand).classList.add('active');
+const database = firebase.database();
+const storage = firebase.storage();
 
 function getFirebaseData() {
   document.getElementById('loading-spinner').classList.remove('hidden');
+  document.getElementById('breadcrumbs').classList.add('hidden');
   database.ref('/'+brand+'/').once('value').then(function(snapshot){
     document.getElementById('loading-spinner').classList.add('hidden');
-    countryData = snapshot.val();
+    document.getElementById('breadcrumbs').classList.remove('hidden');
+    brandData = snapshot.val();
+    countryData = brandData['market info'];
+    currentData = brandData;
     // remove ordering object at position [0]
-    properties = countryData.shift();
-    console.log(countryData);
-    createList(countryData.sort(byCategory));
-    setupFooter(countryData.sort(byName));
-    //console.log(countryData);
+    //countryData.shift();
+    if(page) goToPage(brand, page);
+    createList(currentData);
+    //console.log(brandData);
   }, function(error) {
     // The Promise was rejected.
     if(error.toString().indexOf('permission') != -1) {
@@ -126,7 +139,6 @@ function getFirebaseData() {
   });
 }
 
-var editMode = false;
 const listArea = document.getElementById('main-list');
 const footerArea = document.getElementById('footerData');
 
@@ -139,27 +151,13 @@ listButton.addEventListener('click', viewList);
 const sortButton = document.getElementById('sort-list');
 sortButton.addEventListener('click', sortList);
 
-const editButton = document.getElementById('main-edit');
-//editButton.addEventListener('click', editModeToggle);
+const editButton = document.getElementById('edit-button');
+editButton.addEventListener('change', function() {
+  editMode = !editMode;
+  editModeToggle();
+});
 const addButton = document.getElementById('add-button');
 //addButton.addEventListener('click', addItem);
-
-/* to work OFFLINE
-function Get(yourUrl){
-    var Httpreq = new XMLHttpRequest(); // a new request
-    Httpreq.open("GET",yourUrl,false);
-    Httpreq.send(null);
-    return Httpreq.responseText;
-}
-var json_obj = JSON.parse(Get('/js/kdb250817.json'));
-countryData = json_obj.masterSheet;
-document.getElementById('loading-spinner').classList.add('hidden');
-var dataArray = Object.keys(countryData).map(function(key) { return countryData[key] });
-createList(dataArray.sort(byCategory));
-setupFooter(dataArray.sort(byName));
-countryData = dataArray;
-console.log(countryData);
-/* to work Offline  ends here  */
 
 
 holmes({
@@ -193,52 +191,54 @@ function createList(data) {
   });
 }
 
-function makeUL(array) {
-    var ulArray = array.map(function(item, index, array){
-      var tempItem = JSON.parse(JSON.stringify(item))
-      if(index>=1) {
-        tempItem.sameCategory = (item.category == array[index-1].category);
-      } else {
-        tempItem.sameCategory = false;
-      }
-      return tempItem;
-    })
-    var countries = { 'countryList': ulArray };
-    var template =
-    '<div class="list-container"> \
-      <ul class="list">{{#countryList}} \
-      {{^sameCategory}}<h3 class="list-heading"> {{category}} </h3> {{/sameCategory}}\
-        <li class="list-item cat-{{category}}" id="{{code}}"> \
-          <span class="code-badge">{{code}}</span> \
-          <span class="list-item-title">{{name}}</span> \
-        </li> \
-        {{/countryList}} \
-      </ul> \
-    </div>';
-    var html = Mustache.to_html(template, countries);
-    return html;
+function makeUL(dataObject) {
+  var moustacheSections = [];
+  for (var key in dataObject) {
+    var name = key == 'market info' ? 'Market Info' : dataObject[key].name;
+    var tmpObject = {
+      'name':name,
+      'cleanName':cleanString(name),
+      'key':key
+    }
+    if(dataObject[key].code) tmpObject.code = dataObject[key].code
+    moustacheSections.push(tmpObject);
+  }
+  var moustacheObject = { 'brandList': moustacheSections };
+  var template =
+  '<div class="list-container"> \
+    <ul class="list" id="item-list">{{#brandList}} \
+      <li class="list-item" id="{{cleanName}}" data-title="{{key}}"> \
+        {{#code}}<span class="code-badge">{{code}}</span>{{/code}} \
+        <span class="list-item-title">{{name}}</span> \
+      </li> \
+      {{/brandList}} \
+    </ul> \
+  </div>';
+  var html = Mustache.to_html(template, moustacheObject);
+  setupFooter(moustacheObject);
+  return html;
 }
 
 
-function setupFooter(array) {
-  footerArea.innerHTML = buildFooter(array);
+function setupFooter(dataObject) {
+  footerArea.innerHTML = buildFooter(dataObject);
   var items = document.getElementsByClassName('footer-item');
   Array.from(items).forEach(function(element) {
     element.addEventListener('click', clickItem, false);
   });
 }
 
-function buildFooter(array) {
-  var countries = { 'countryList': array };
+function buildFooter(dataObject) {
+  var moustacheObject = dataObject;
   var template =
-    '<ul class="footer-list">{{#countryList}} \
-      <li class="footer-item" id="{{code}}"> \
+    '<ul class="footer-list">{{#brandList}} \
+      <li class="footer-item" id="{{cleanName}}" data-title="{{name}}"> \
         <span class="list-item-title">{{name}}</span> \
       </li> \
-      {{/countryList}} \
+      {{/brandList}} \
     </ul> \
   </div>';
-  var html = Mustache.to_html(template, countries);
+  var html = Mustache.to_html(template, moustacheObject);
   return html;
 }
 
@@ -246,14 +246,20 @@ function buildFooter(array) {
 function clickItem(e) {
   // list item is clicked
   if(this) {
-    var id = this.id;
+    var title = this.dataset.title;
   } else {
-    id = 'AL';
+    title = 'market info';
   }
   //get data using id
-  var thisCountry = getCountryBy('code',id);
+  var infoObject = getObjectBy('name',title);
+  // market info is list of countries so need to make new country list
+  if(title=='market info') {
+    getCountryData();
+    return;
+  }
+
   // get html using mustache.js template
-  var html = modalTemplate(thisCountry);
+  var html = modalTemplate(infoObject);
 
   // instanciate new modal
   if(modal==null) {
@@ -262,54 +268,58 @@ function clickItem(e) {
         stickyFooter: false,
         closeMethods: ['overlay', 'button', 'escape'],
         closeLabel: "Close",
-        cssClass: ['country-modal'],
-        beforeClose: function() {
-            // here's goes some logic
-            // e.g. save content before closing the modal
-            return true; // close the modal
-        	return false; // nothing happens
-        }
+        cssClass: ['country-modal']
     });
   }
-
   // set content
   modal.setContent(html);
-
   // open modal
   modal.open();
-
   // dom is loaded, set up event listeners etc.
-  finalModalSetup(thisCountry);
+  finalModalSetup(infoObject);
 
 }
 
-function modalTemplate(countryObject) {
-  var country = JSON.parse(JSON.stringify(countryObject));
-  var moustacheSections = { 'sections' : [], 'name': country.name, 'code': country.code };
-  delete country.name;
-  delete country.code;
-  delete country.category;
+
+/*
+* -----
+*  MODAL TEMPLATING AND SETUP
+* ------
+*/
+
+function modalTemplate(data) {
+  console.log(data);
+  var dataObject = JSON.parse(JSON.stringify(data));
+  var moustacheSections = { 'sections' : [], 'name': dataObject.name };
+  //dataObject is a country
+  if(dataObject.hasOwnProperty('code'))  {
+    moustacheSections['code'] = dataObject.code;
+    moustacheSections['isCountry'] = true;
+    delete dataObject.code;
+  }
+  moustacheSections['id'] = dataObject.id || dataObject.name;
+  delete dataObject.id;
+  delete dataObject.name;
   // if 1 image it will be string, otherwise it's an object
   // either way we gotta clean it up
-  if(typeof country.images == 'object') {
-    country.images = cleanArray(country.images);
+  if(typeof dataObject.images == 'object') {
+    dataObject.images = cleanArray(dataObject.images);
     moustacheSections['images'] = [];
-    for(var key in country.images) {
-      var imageObj = { 'key': key, 'src': country.images[key] };
+    for(var key in dataObject.images) {
+      var imageObj = { 'key': key, 'src': dataObject.images[key] };
       moustacheSections['images'].push(imageObj);
     }
-  } else if (typeof country.images == 'string') {
-    moustacheSections['images'] = [{ 'key':0, 'src':country.images}];
+  } else if (typeof dataObject.images == 'string') {
+    moustacheSections['images'] = [{ 'key':0, 'src':dataObject.images}];
   }
 
-  for (var key in properties){
-    var prop = properties[key];
-    if (country.hasOwnProperty(prop) &&
-        country[prop].length > 1 &&
+  for (var prop in dataObject){
+    if (dataObject.hasOwnProperty(prop) &&
+        dataObject[prop].length > 1 &&
         prop!='images') {
       var sectionObject = {};
       // if any links in there, lets create the anchor tag
-      sectionObject.value = replaceURLWithHTMLLinks(country[prop]);
+      sectionObject.value = replaceURLWithHTMLLinks(dataObject[prop]);
       sectionObject.key = prop;
       //if(!isNaN(prop)) prop = '';
       moustacheSections['sections'].push(sectionObject);
@@ -319,12 +329,14 @@ function modalTemplate(countryObject) {
   console.log(moustacheSections);
 
   var template =
-  '<h3><span class="code-badge" id="country-code">{{code}}</span><span id="current-country">{{name}}</span></h3> \
+  '<h3 id="card-title" data-fbid="{{id}}">{{#isCountry}}<span class="code-badge editable"  id="country-code">{{code}}</span>{{/isCountry}} \
+  <span id="current-item" class="editable">{{name}}</span> <a class="btn btn-default" id="add-section">+</a> <a class="btn btn-success"><i class="icon-ok"></i> Done</a> <a class="btn btn-danger" id="remove-card"><i class="icon-trash-empty"></i> Delete</a></h3> \
+  \
   <div class="country-info"> \
     {{#sections}} \
     <div class="section clearfix"> \
-      <dt class="section-title">{{key}} </dt> \
-      <dd class="section-content">{{{value}}}</dd> \
+      <dt class="section-title editable">{{key}} </dt> \
+      <dd class="section-content editable">{{{value}}}</dd> \
     </div> \
     {{/sections}} \
   </div> \
@@ -332,31 +344,93 @@ function modalTemplate(countryObject) {
     {{#images}} <div class="image-container"> \
     <img src="{{src}}" alt="image for {{name}}" id="{{key}}" class="modal-image"> <span class="remove-cross">x<span></div> {{/images}} \
   </div> \
-  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Upload Image </label> <span id="upload-text"></span>';
+  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Upload Image </label> <span id="upload-text"></span>\
+  <span id="card-info-text"></span>';
   var html = Mustache.to_html(template, moustacheSections);
   return html;
 
 }
 
+function finalModalSetup(infoObject) {
+  // once dom has updated with modal, finalModalSetup runs
+  var removeCrossItems = document.getElementsByClassName('remove-cross');
+  // add event listeners for remove icons
+  Array.from(removeCrossItems).forEach(function(element) {
+    element.addEventListener('click', removeImage, false);
+  });
+  // add error listener for images
+  var imageItems = document.getElementsByClassName('modal-image');
+  Array.from(imageItems).forEach(function(element) {
+    element.addEventListener('error', imgError, false);
+  });
+  if(editMode) {
+    makeTextEditable();
+    setupEditButtons();
+  }
+  // setup upload button + images
+  document.getElementById('file-upload').addEventListener('change', uploadFile);
+  // if 2 images already, hide upload button
+  if(typeof infoObject.images == 'object') {
+    if(infoObject.images.length >=2) document.getElementById('upload-container').classList.add('hidden');
+  }
+}
 
-//function to save file
+function setupEditButtons() {
+  var removeButton = document.getElementById('remove-card');
+  removeButton.addEventListener('click', removeCard, false);
+  var addSectionBtn = document.getElementById('add-section');
+  addSectionBtn.addEventListener('click', addSection, false);
+}
+
+function removeCard() {
+  if (confirm('Are you sure you want to remove this card from the database?')) {
+    var currentItem = document.getElementById('card-title').dataset.fbid;
+    var infoObject = getObjectBy('name', currentItem);
+    var ref = getfbRef(infoObject);
+
+    var fbRef = database.ref('/'+brand+'/'+ref);
+    fbRef.remove().then(function() {
+      delete currentData[currentItem];
+      modal.close();
+      // reset the list with our new database
+      createList(currentData);
+    });
+  }
+
+}
+
+function addSection() {
+  var currentItem = document.getElementById('card-title').dataset.fbid;
+  currentData[currentItem]['Section name'] = 'Section description';
+  var html = modalTemplate(currentData[currentItem]);
+  modal.setContent(html);
+  finalModalSetup(currentData[currentItem]);
+}
+
+
+/*
+* -----
+*  IMAGE UPLOADING AND STORING
+* ------
+*/
+
 function uploadFile() {
 
   var file = document.getElementById("file-upload").files[0];
-  var currentCountry = document.getElementById("current-country").innerHTML;
-  var countryObject = getCountryBy('name',currentCountry);
+  var currentItem = document.getElementById("current-item").innerHTML;
+  var infoObject = getObjectBy('name',currentItem);
   var uploadText = document.getElementById('upload-text');
-  var fileName = brand + "-" + currentCountry +  "-" + file.name;
+  var fileName = brand + "-" + currentItem +  "-" + file.name;
 
   var storageRef = storage.ref();
 
   //dynamically set reference to the file name
   var imageRef = storageRef.child('images/'+ fileName);
   imageRef.getDownloadURL().then(function(url) {
-    if(countryObject.images.includes(url)) {
+    if(infoObject.images.includes(url)) {
       uploadText.innerHTML = 'File already exists in storage';
     } else {
-      addUrlToDB(url, currentCountry);
+      addUrlToDB(url, currentItem);
     }
     return;
   }).catch(function(error) {
@@ -383,86 +457,77 @@ function uploadFile() {
       // Handle successful uploads on complete
       uploadText.innerHTML = '';
       var downloadURL = uploadTask.snapshot.downloadURL;
-      addUrlToDB(downloadURL,currentCountry);
+      addUrlToDB(downloadURL,currentItem);
     });
   });
 
 }
 
-function addUrlToDB(url,currentCountry) {
+function addUrlToDB(url,currentItem) {
+  console.log(currentItem);
   // get the current country object to add the images
-  var countryObject = getCountryBy('name',currentCountry);
-
-  var countryIndex = countryData.findIndex(x => x.name == currentCountry);
-  countryIndex++; //to compensate for the element we shift()ed at the beginning
-  console.log("index: ",countryIndex)
+  var infoObject = getObjectBy('name',currentItem);
+  console.log(infoObject);
+  var ref = getfbRef(infoObject);
   // if no images currently, create the array
-  countryObject.images = countryObject.images || [];
-  if(!Array.isArray(countryObject.images)) {
-    countryObject.images = [countryObject.images]
+  infoObject.images = infoObject.images || [];
+  if(!Array.isArray(infoObject.images)) {
+    infoObject.images = [infoObject.images]
   }
-  console.log("images: ",countryObject.images);
-  countryObject.images.push(url);
+  console.log("images: ",infoObject.images);
+  infoObject.images.push(url);
   // update database with new image
-  var countryRef = database.ref('/'+brand+'/'+countryIndex);
-  countryRef.update(countryObject).then(function() {
-    syncData(countryIndex);
+  var fbRef = database.ref('/'+brand+'/'+ref);
+  fbRef.update(infoObject).then(function() {
+    console.log('fb database update complete');
+    document.getElementById('card-info-text').innerHTML = "Saved. You're up to date."
+    //syncData(countryIndex);
   });
   // reset the modal with our new content
-  var html = modalTemplate(countryObject);
+  var html = modalTemplate(infoObject);
   modal.setContent(html);
-  finalModalSetup(countryObject);
-}
-
-function finalModalSetup(countryObject) {
-  // once dom has updated with modal, finalModalSetup runs
-  var removeCrossItems = document.getElementsByClassName('remove-cross');
-  Array.from(removeCrossItems).forEach(function(element) {
-    element.addEventListener('click', removeImage, false);
-  });
-  var imageItems = document.getElementsByClassName('modal-image');
-  Array.from(imageItems).forEach(function(element) {
-    element.addEventListener('error', imgError, false);
-  });
-  document.getElementById('file-upload').addEventListener('change', uploadFile);
-  // if 2 images already, hide upload button
-  if(typeof countryObject.images == 'object') {
-    if(countryObject.images.length >=2) document.getElementById('upload-container').classList.add('hidden');
-  }
+  finalModalSetup(infoObject);
 }
 
 
 function removeImage(e) {
   var imageId = e.target.previousElementSibling.id;
   var imageSrc = e.target.previousElementSibling.src;
-  var countryCode = document.getElementById('country-code').innerHTML;
-  var countryObject = getCountryBy('code',countryCode);
-  var countryIndex = countryData.findIndex(x => x.code == countryCode);
-  countryIndex++;
-  console.log(countryIndex);
+
+  var currentItem = document.getElementById('current-item').innerHTML;
+  var infoObject = getObjectBy('name',currentItem);
+
+  var ref = getfbRef(infoObject);
 
   var imageReference = storage.refFromURL(imageSrc);
   imageReference.delete().then(function() {
     // File deleted successfully
-    countryObject.images.splice(imageId,1);
-    var countryRef = database.ref('/'+brand+'/'+countryIndex);
-    countryRef.update(countryObject).then(function() {
-      syncData(countryIndex);
+    infoObject.images.splice(imageId,1);
+
+    var fbRef = database.ref('/'+brand+'/'+ref);
+    fbRef.update(infoObject).then(function() {
+      //syncData(countryIndex);
     });
 
     // reset the modal with our new content
-    var html = modalTemplate(countryObject);
+    var html = modalTemplate(infoObject);
     modal.setContent(html);
-    finalModalSetup(countryObject);
+    finalModalSetup(infoObject);
   }).catch(function(error) {
+    console.log(error);
     // Uh-oh, an error occurred!
     alert("Couldn't delete image, sorry.");
   });
 
 }
 
+/*
+*  END OF IMAGE SCRIPTS
+*/
+
+
 function viewGrid() {
-  createList(countryData.sort(byCategory));
+  createList(currentData);
   listArea.classList.remove('list-view');
   listArea.classList.add('grid-view');
   listButton.classList.remove('active');
@@ -470,7 +535,7 @@ function viewGrid() {
 }
 
 function viewList() {
-  createList(countryData.sort(byName));
+  createList(currentData);
   listArea.classList.add('list-view');
   listArea.classList.remove('grid-view');
   gridButton.classList.remove('active');
@@ -481,25 +546,201 @@ function sortList() {
 
 }
 
+function getCountryData() {
+  history.pushState({'brand': brand,'page':'marketinfo'}, null, '?brand='+brand+'&page=marketinfo');
+  document.getElementById("second-level").innerHTML = " > Market Info";
+  currentData = countryData;
+  createList(currentData);
+}
+function getBrandData() {
+  history.pushState({'brand': brand, 'page':null}, null, '?brand='+brand);
+  document.getElementById("second-level").innerHTML = '';
+  currentData = brandData;
+  createList(currentData);
+}
+
 
 function syncData(cid) {
   console.log("cid: ",cid," sheet: ",brand);
   // just trigger the sheet to get new data for the 1 record
-  request('GET', 'https://script.google.com/macros/s/AKfycbzG2biCtXYdTxt5sLhfh1V5lE95V1ZhFVbkdcrR-Bua21zTihCa/exec?cid='+cid+'&sheet='+brand).done(function (res) {
-    //countryData = JSON.parse(res.getBody());
-    //setListData(countryData);
-    console.log(res.getBody());
+  //request('GET', 'https://script.google.com/macros/s/AKfycbzG2biCtXYdTxt5sLhfh1V5lE95V1ZhFVbkdcrR-Bua21zTihCa/exec?cid='+cid+'&sheet='+brand).done(function (res) {
+    //brandData = JSON.parse(res.getBody());
+    //setListData(brandData);
+    //console.log(res.getBody());
+  //});
+}
+
+
+/*
+* -----
+*  EDITTING MODE AND DB UPDATING
+* ------
+*/
+
+
+function editModeToggle() {
+  if(editMode) {
+    document.body.classList.add('editmode');
+    addNewItemButton();
+    makeTextEditable();
+  } else {
+    document.body.classList.remove('editmode');
+    // remove new item button from list
+    removeNewItemButton();
+  }
+}
+
+function addNewItemButton() {
+  //clone an item in the list and add it to the end as a new item button
+  const mainList = document.getElementById('item-list');
+  const listItems = document.getElementsByClassName('list-item');
+  const singleItem = listItems[0];
+  var itemClone = singleItem.cloneNode(true);
+  itemClone.id = "";
+  itemClone.dataset.title = "";
+  itemClone.children[0].innerHTML = "+";
+  itemClone.classList.add('new-list-item');
+  itemClone.onclick = addNewItem;
+  // Append the cloned <li> element to <ul>
+  mainList.appendChild(itemClone);
+  itemClone.style.opacity = 1;
+}
+function removeNewItemButton() {
+  const newItems = document.getElementsByClassName('new-list-item');
+  Array.from(newItems).forEach(function(element) {
+    var parent = element.parentElement;
+    parent.removeChild(element);
   });
 }
 
-/*
-function editModeToggle() {
-  editMode = !editMode;
-  document.body.className = editMode ? " editmode" : "";
-  editButton.innerHTML = editMode ? 'Finish' : 'Edit';
-  editMode ? enableTextEditing() : disableTextEditing();
+function makeTextEditable() {
+  var editableElements = document.getElementsByClassName("editable");
+  Array.from(editableElements).forEach(function(element) {
+    element.contentEditable = true;
+    element.addEventListener('blur', endEdit);
+    element.addEventListener('keydown', function(e) {
+      var key = e.keyCode || e.charCode;
+      if(key == 13 && !e.shiftKey) { // if enter key is pressed and shift is not pressed
+          e.target.blur();  // lose focus
+      } else {
+          document.getElementById('card-info-text').innerHTML = "Waiting for you to finish.";
+      }
+    });
+  });
 }
 
+function addNewItem() {
+  var newItem = {
+      'name':'New Title',
+      'Section name': 'Section description'
+  };
+  if(currentData==brandData) {
+    var newItemRef = database.ref('/'+brand+'/').push();
+    brandData[newItemRef.key] = newItem;
+  } else {
+    newItem.code = 'XX';
+    countryData.push(newItem);
+    newItemRef = database.ref('/'+brand+'/market info/').push();
+  }
+  newItem.id = newItemRef.key;
+  newItemRef.set(newItem).then(function() {
+    createList(currentData);
+    addNewItemButton();
+  })
+  .catch(function(error) {
+    console.log('Synchronization failed');
+    alert('Problem adding item to database')
+  });
+}
+
+
+function endEdit(event) {
+  console.log('in endEdit');
+  var infoText = document.getElementById('card-info-text');
+  infoText.innerHTML = "Saving...";
+  var infoID = document.getElementById('card-title').dataset.fbid;
+  var newObject = { 'id': infoID };
+  // get new title
+  newObject.name = document.getElementById('current-item').innerHTML;
+  if(document.getElementById('country-code')) newObject.code = document.getElementById('country-code').innerHTML;
+  // get text from sections
+  var cardSections = document.getElementsByClassName("section");
+  Array.from(cardSections).forEach(function(element) {
+    var key = element.firstElementChild.innerHTML;
+    var prop = element.lastElementChild.innerHTML;
+    newObject[key] = prop;
+  });
+
+  var oldObject = getObjectBy('name',infoID);
+  if(oldObject.images) newObject.images = oldObject.images;
+  var ref = getfbRef(oldObject);
+  // now we can update the Firebase Database
+  var fbRef = database.ref('/'+brand+'/'+ref);
+  fbRef.set(newObject).then(function() {
+    currentData[infoID] = newObject;
+    createList(currentData);
+    addNewItemButton();
+    infoText.innerHTML = "Saved. You're up to date."
+    console.log('fb db update complete')
+  });
+
+}
+
+/*
+function openNewItemModal() {
+  console.log('new item modal opening');
+  // get html using mustache.js template
+  var html = newModalTemplate();
+  // instanciate new modal
+  if(modal==null) {
+    modal = new tingle.modal({
+        footer: true,
+        stickyFooter: false,
+        closeMethods: ['overlay', 'button', 'escape'],
+        closeLabel: "Close",
+        cssClass: ['country-modal'],
+        beforeClose: function() {
+            saveModalData();
+            return true; // close the modal
+        }
+    });
+  }
+  // set content
+  modal.setContent(html);
+  // open modal
+  modal.open();
+  // dom is loaded, set up event listeners etc.
+  finalModalSetup({});
+}
+
+function newModalTemplate() {
+  var moustacheSections = { 'isCountry': false }
+  var template =
+  '<h3>{{#isCountry}}<span class="code-badge"  id="country-code">XX</span>{{/isCountry}}<span id="current-item" contenteditable="true" >New Title</span></h3> \
+  <div class="country-info"> \
+    <div class="section clearfix"> \
+      <dt class="section-title" contenteditable="true"> Section name </dt> \
+      <dd class="section-content" contenteditable="true"> Section content </dd> \
+    </div> \
+  </div> \
+  <div class="images" id="images-container" > \
+    {{#images}} <div class="image-container"> \
+    <img src="{{src}}" alt="image for {{name}}" id="{{key}}" class="modal-image"> <span class="remove-cross">x<span></div> {{/images}} \
+  </div> \
+  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Upload Image </label> <span id="upload-text"></span>';
+  var html = Mustache.to_html(template, moustacheSections);
+  return html;
+}
+
+
+function saveModalData() {
+  console.log(currentData);
+  var newItem = {};
+}
+*/
+
+
+/*
 function enableTextEditing() {
   var countryTitleElements = document.getElementsByClassName("country");
   Array.from(countryTitleElements).forEach(function(element) {
@@ -529,7 +770,7 @@ function disableTextEditing() {
     //element.removeEventListener('click', detailBeginEdit);
   });
 }
-*/
+
 
 function endEdit(event) {
   var siblings = event.target.parentElement.children;
@@ -537,15 +778,15 @@ function endEdit(event) {
       titleElement = siblings[2],
       detailsElement = siblings[3];
   var item = countryList.get('id', idElement.innerHTML)[0];
-  var countryIndex = countryData.findIndex(findById,idElement.innerHTML);
-  console.log(countryData);
-  countryData[countryIndex] = {
+  var countryIndex = brandData.findIndex(findById,idElement.innerHTML);
+  console.log(brandData);
+  brandData[countryIndex] = {
     "id":idElement.innerHTML,
     "country":titleElement.innerHTML,
     "details":detailsElement.innerHTML
   };
-  console.log(countryData);
-  saveCountryData(countryData);
+  console.log(brandData);
+  //savebrandData(brandData);
 }
 
 function findById(country) {
@@ -560,7 +801,7 @@ function addItem() {
     "id": Math.floor(Math.random()*12000),
     "country": "New Title",
     "category": "Some details"
-  };*/
+  };
 }
 
 function removeItem(event) {
@@ -568,24 +809,36 @@ function removeItem(event) {
   var idElement = siblings[1];
   console.log(idElement.innerHTML);
   countryList.remove('id', idElement.innerHTML);
-  var countryIndex = countryData.findIndex(findById,idElement.innerHTML);
-  countryData.splice(countryIndex, 1);
-  saveCountryData(countryData);
+  var countryIndex = brandData.findIndex(findById,idElement.innerHTML);
+  brandData.splice(countryIndex, 1);
+  savebrandData(brandData);
 }
+*/
 
 
 /* ==========================================================================
    HELPER FUNCTIONS
    ========================================================================== */
 
-function getCountryBy(property,id) {
+function getObjectBy(property,id) {
   //get data using id
-  var thisCountry;
-  countryData.map(function(item) {
-    if(item[property]==id) thisCountry = item;
-  });
-  return thisCountry;
+  if(currentData[id]) return currentData[id];
+  console.log('getObjectBy: ',property,id);
+  for (var key in currentData) {
+    if(currentData[key][property]==id) return currentData[key];
+  }
  }
+
+function getfbRef(dataObject) {
+  var currentItem = dataObject.id || dataObject;
+  if(dataObject.hasOwnProperty('code')) { // its a country object
+    var ref = "market info/"+dataObject.name
+  } else {
+    ref = currentItem;
+  }
+  console.log(ref);
+  return ref;
+}
 
 function byCategory(a,b) {
   if (a.category < b.category) {
@@ -605,9 +858,25 @@ function byName(a,b) {
   return 0;
 }
 
+function goToPage(brand, page) {
+  switch (page) {
+    case 'marketinfo':
+      getCountryData();
+      break;
+    default:
+      getBrandData();
+  }
+
+}
+
 function replaceURLWithHTMLLinks(text) {
   var exp = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-  return text.replace(exp,"<a href='$1'>$1</a>");
+  return text.replace(exp,"<a href='$1' target='_blank'>$1</a>");
+}
+
+function cleanString(string) {
+  string.replace(/ /g,'');
+  return string;
 }
 
 function cleanArray(actual) {
@@ -626,18 +895,17 @@ function getURLParameter(name) {
 
 function imgError(e) {
   var image = e.target;
-  var currentCountry = document.getElementById('current-country').innerHTML;
-  var countryObject = getCountryBy('name',currentCountry);
-  var countryIndex = countryData.findIndex(x => x.name == currentCountry);
-  countryIndex++; //to compensate for the element we shift()ed at the beginning
+  var currentItem = document.getElementById('current-item').innerHTML;
+  var infoObject = getObjectBy('name',currentItem);
+  var ref = getfbRef(infoObject);
 
-  countryObject.images.splice(image.id,1);
-  var countryRef = database.ref('/'+brand+'/'+countryIndex);
-  countryRef.update(countryObject).then(function() {
-    syncData(countryIndex);
+  infoObject.images.splice(image.id,1);
+  var fbRef = database.ref('/'+brand+'/'+ref);
+  fbRef.update(infoObject).then(function() {
+    //syncData(countryIndex);
   });
   image.parentNode.outerHTML = "";
-  finalModalSetup(countryObject);
+  finalModalSetup(infoObject);
 }
 
 
