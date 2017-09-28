@@ -117,7 +117,7 @@ const storage = firebase.storage();
 function getFirebaseData() {
   document.getElementById('loading-spinner').classList.remove('hidden');
   document.getElementById('breadcrumbs').classList.add('hidden');
-  database.ref('/'+brand+'/').once('value').then(function(snapshot){
+  database.ref('/'+brand+'/').orderByChild('market info').once('value').then(function(snapshot){
     document.getElementById('loading-spinner').classList.add('hidden');
     document.getElementById('breadcrumbs').classList.remove('hidden');
     brandData = snapshot.val();
@@ -189,6 +189,7 @@ function createList(data) {
   Array.from(items).forEach(function(element) {
     element.addEventListener('click', clickItem, false);
   });
+  if(editMode) addNewItemButton();
 }
 
 function makeUL(dataObject) {
@@ -203,6 +204,7 @@ function makeUL(dataObject) {
     if(dataObject[key].code) tmpObject.code = dataObject[key].code
     moustacheSections.push(tmpObject);
   }
+  moustacheSections.sort(byName);
   var moustacheObject = { 'brandList': moustacheSections };
   var template =
   '<div class="list-container"> \
@@ -253,7 +255,7 @@ function clickItem(e) {
   //get data using id
   var infoObject = getObjectBy('name',title);
   // market info is list of countries so need to make new country list
-  if(title=='market info') {
+  if(title.toLowerCase()=='market info') {
     getCountryData();
     return;
   }
@@ -394,6 +396,7 @@ function removeCard() {
       modal.close();
       // reset the list with our new database
       createList(currentData);
+
     });
   }
 
@@ -596,9 +599,10 @@ function addNewItemButton() {
   const listItems = document.getElementsByClassName('list-item');
   const singleItem = listItems[0];
   var itemClone = singleItem.cloneNode(true);
-  itemClone.id = "";
+  itemClone.id = "add-btn";
   itemClone.dataset.title = "";
   itemClone.children[0].innerHTML = "+";
+  itemClone.children[1].innerHTML = "";
   itemClone.classList.add('new-list-item');
   itemClone.onclick = addNewItem;
   // Append the cloned <li> element to <ul>
@@ -631,21 +635,22 @@ function makeTextEditable() {
 
 function addNewItem() {
   var newItem = {
-      'name':'New Title',
+      'name':'| New Title',
       'Section name': 'Section description'
   };
   if(currentData==brandData) {
     var newItemRef = database.ref('/'+brand+'/').push();
-    brandData[newItemRef.key] = newItem;
+    currentData[newItemRef.key] = newItem;
   } else {
     newItem.code = 'XX';
-    countryData.push(newItem);
     newItemRef = database.ref('/'+brand+'/market info/').push();
+    currentData[newItemRef.key] = newItem;
   }
   newItem.id = newItemRef.key;
+  document.getElementById('add-btn').disabled = true;
   newItemRef.set(newItem).then(function() {
     createList(currentData);
-    addNewItemButton();
+    document.getElementById('add-btn').disabled = false;
   })
   .catch(function(error) {
     console.log('Synchronization failed');
@@ -679,141 +684,12 @@ function endEdit(event) {
   fbRef.set(newObject).then(function() {
     currentData[infoID] = newObject;
     createList(currentData);
-    addNewItemButton();
     infoText.innerHTML = "Saved. You're up to date."
     console.log('fb db update complete')
   });
 
 }
 
-/*
-function openNewItemModal() {
-  console.log('new item modal opening');
-  // get html using mustache.js template
-  var html = newModalTemplate();
-  // instanciate new modal
-  if(modal==null) {
-    modal = new tingle.modal({
-        footer: true,
-        stickyFooter: false,
-        closeMethods: ['overlay', 'button', 'escape'],
-        closeLabel: "Close",
-        cssClass: ['country-modal'],
-        beforeClose: function() {
-            saveModalData();
-            return true; // close the modal
-        }
-    });
-  }
-  // set content
-  modal.setContent(html);
-  // open modal
-  modal.open();
-  // dom is loaded, set up event listeners etc.
-  finalModalSetup({});
-}
-
-function newModalTemplate() {
-  var moustacheSections = { 'isCountry': false }
-  var template =
-  '<h3>{{#isCountry}}<span class="code-badge"  id="country-code">XX</span>{{/isCountry}}<span id="current-item" contenteditable="true" >New Title</span></h3> \
-  <div class="country-info"> \
-    <div class="section clearfix"> \
-      <dt class="section-title" contenteditable="true"> Section name </dt> \
-      <dd class="section-content" contenteditable="true"> Section content </dd> \
-    </div> \
-  </div> \
-  <div class="images" id="images-container" > \
-    {{#images}} <div class="image-container"> \
-    <img src="{{src}}" alt="image for {{name}}" id="{{key}}" class="modal-image"> <span class="remove-cross">x<span></div> {{/images}} \
-  </div> \
-  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Upload Image </label> <span id="upload-text"></span>';
-  var html = Mustache.to_html(template, moustacheSections);
-  return html;
-}
-
-
-function saveModalData() {
-  console.log(currentData);
-  var newItem = {};
-}
-*/
-
-
-/*
-function enableTextEditing() {
-  var countryTitleElements = document.getElementsByClassName("country");
-  Array.from(countryTitleElements).forEach(function(element) {
-    element.contentEditable = true;
-    element.addEventListener('blur', endEdit);
-  });
-  var detailElements = document.getElementsByClassName("details");
-  Array.from(detailElements).forEach(function(element) {
-    element.contentEditable = true;
-    element.addEventListener('blur', endEdit);
-  });
-  var removeButtons = document.getElementsByClassName('close-img');
-  Array.from(removeButtons).forEach(function(element) {
-    element.addEventListener('click', removeItem);
-  });
-}
-
-function disableTextEditing() {
-  var countryTitleElements = document.getElementsByClassName("country");
-  Array.from(countryTitleElements).forEach(function(element) {
-    element.contentEditable = false;
-    //element.removeEventListener('click', titleBeginEdit);
-  });
-  var detailElements = document.getElementsByClassName("details");
-  Array.from(detailElements).forEach(function(element) {
-    element.contentEditable = false;
-    //element.removeEventListener('click', detailBeginEdit);
-  });
-}
-
-
-function endEdit(event) {
-  var siblings = event.target.parentElement.children;
-  var idElement = siblings[1],
-      titleElement = siblings[2],
-      detailsElement = siblings[3];
-  var item = countryList.get('id', idElement.innerHTML)[0];
-  var countryIndex = brandData.findIndex(findById,idElement.innerHTML);
-  console.log(brandData);
-  brandData[countryIndex] = {
-    "id":idElement.innerHTML,
-    "country":titleElement.innerHTML,
-    "details":detailsElement.innerHTML
-  };
-  console.log(brandData);
-  //savebrandData(brandData);
-}
-
-function findById(country) {
-  return country.id == this;
-}
-
-
-function addItem() {
-
-  /*
-  var newItem = {
-    "id": Math.floor(Math.random()*12000),
-    "country": "New Title",
-    "category": "Some details"
-  };
-}
-
-function removeItem(event) {
-  var siblings = event.target.parentElement.children;
-  var idElement = siblings[1];
-  console.log(idElement.innerHTML);
-  countryList.remove('id', idElement.innerHTML);
-  var countryIndex = brandData.findIndex(findById,idElement.innerHTML);
-  brandData.splice(countryIndex, 1);
-  savebrandData(brandData);
-}
-*/
 
 
 /* ==========================================================================
@@ -831,8 +707,9 @@ function getObjectBy(property,id) {
 
 function getfbRef(dataObject) {
   var currentItem = dataObject.id || dataObject;
+  var fbKey = dataObject.id || dataObject.name;
   if(dataObject.hasOwnProperty('code')) { // its a country object
-    var ref = "market info/"+dataObject.name
+    var ref = "market info/"+fbKey
   } else {
     ref = currentItem;
   }
@@ -851,9 +728,9 @@ function byCategory(a,b) {
 
 }
 function byName(a,b) {
-  if (a.name < b.name)
+  if (a.name.toLowerCase() < b.name.toLowerCase())
    return -1;
-  if (a.name > b.name)
+  if (a.name.toLowerCase() > b.name.toLowerCase())
    return 1;
   return 0;
 }

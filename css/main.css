@@ -105,7 +105,7 @@ body.signed-out .logo-container {
   width: auto;
   max-width: none;
 }
-body.signed-out .input-area {
+body.signed-out .input-area, body.signed-out #breadcrumbs {
   display: none;
 }
 body.loading .logo-container, body.loading #google-sign-in {
@@ -283,6 +283,12 @@ input.searchbar {
   max-height: 50px;
 }
 
+#add-btn:disabled {
+  opacity: 0.3;
+  cursor: auto;
+}
+
+/*
 #add-button {
   margin: 12px 8px;
   background-color: #371C16;
@@ -304,7 +310,7 @@ input.searchbar {
   color: #fff;
   margin-top: -4px;
   display: block;
-}
+}*/
 
 #loading-spinner {
   text-align: center;
@@ -368,6 +374,9 @@ ul.list {
     align-items: stretch;
     justify-content: flex-start;
     align-content: stretch;
+}
+body.signed-out ul.list {
+  display: none;
 }
 
 .list li, .tingle-modal-box h3 {
@@ -544,12 +553,18 @@ body:not(.editmode) .tingle-modal-box .btn {
 dt.section-title {
     width: 28%;
     float: left;
-    padding: 0 10px 0 6px;
+    padding: 5px 10px 5px 6px;
 }
 dd.section-content {
     width: 72%;
     float: right;
     margin: 0;
+    padding: 5px;
+}
+
+.editable:not(.code-badge):focus {
+    outline: 3px auto #999;
+    background-color: rgba(255,255,255,0.9);
 }
 
 
@@ -662,6 +677,10 @@ footer ul {
   -webkit-column-gap: 2em;
   -moz-column-gap: 2em;
   column-gap: 2em;
+}
+
+body.signed-out footer ul {
+  display: none;
 }
 
 footer ul li {
