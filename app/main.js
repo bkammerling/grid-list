@@ -602,7 +602,7 @@ function addNewItemButton() {
   itemClone.id = "add-btn";
   itemClone.dataset.title = "";
   itemClone.children[0].innerHTML = "+";
-  itemClone.children[1].innerHTML = "";
+  if(itemClone.children[1]) itemClone.children[1].innerHTML = "";
   itemClone.classList.add('new-list-item');
   itemClone.onclick = addNewItem;
   // Append the cloned <li> element to <ul>

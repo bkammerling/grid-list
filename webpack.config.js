@@ -43,6 +43,7 @@ module.exports = {
       'css/normalize.min.css',
       'css/tingle.min.css',
       'css/MyFontsTradeGothic.css',
+      'css/fontello/fontello.css',
       'css/main.css'
     ], append: false })
 

@@ -8,9 +8,9 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async>
 
-    <link href="css/normalize.min.css" rel="stylesheet"><link href="css/tingle.min.css" rel="stylesheet"><link href="css/MyFontsTradeGothic.css" rel="stylesheet"><link href="css/main.css" rel="stylesheet"></head>
+    <link href="css/normalize.min.css" rel="stylesheet"><link href="css/tingle.min.css" rel="stylesheet"><link href="css/MyFontsTradeGothic.css" rel="stylesheet"><link href="css/fontello/fontello.css" rel="stylesheet"><link href="css/main.css" rel="stylesheet"></head>
     <body class="loading signed-out">
         <!--[if lt IE 8]>
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
@@ -24,6 +24,12 @@
               <div id="user-info">
                 <span id="signin-name"></span> | <span id="signin-email"></span> | <span id="sign-out" class="link-style">Sign Out</span>
               </div>
+              <!-- Rounded switch -->
+              <span class="switch-label">Edit mode</span>
+              <label class="switch">
+                <input type="checkbox" id="edit-button">
+                <span class="slider round"></span>
+              </label>
             </div>
             <div class="page-nav">
             </div>
@@ -51,6 +57,7 @@
           <div id="dataArea">
             <button class="button" id="google-sign-in">Sign in with Google</button>
             <div id="loading-spinner" class="hidden"><img src="./img/spinner2.gif" /></div>
+            <h4 id="breadcrumbs"><span id="current-brand"></span><span id="second-level"></span></h4>
             <div class="" id="main-list"></div>
           </div>
 
