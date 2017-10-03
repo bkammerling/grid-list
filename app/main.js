@@ -9,9 +9,9 @@ const config = {
 var brandData, countryData, currentData, properties, editMode;
 const brand = getURLParameter('brand') || "monster";
 brand = brand.toLowerCase();
-document.getElementById("logo-"+brand).classList.add('active');
 document.getElementById("current-brand").innerHTML = brand;
 document.getElementById("current-brand").addEventListener('click',getBrandData,false);
+document.getElementById("new-brand").addEventListener('click',addBrand,false);
 var page = getURLParameter('page') || null;
 
 /* Initialize TESTING Firebase
@@ -117,17 +117,23 @@ const storage = firebase.storage();
 function getFirebaseData() {
   document.getElementById('loading-spinner').classList.remove('hidden');
   document.getElementById('breadcrumbs').classList.add('hidden');
-  database.ref('/'+brand+'/').orderByChild('market info').once('value').then(function(snapshot){
+  // Get the brand selection we have on the db
+  // first line supposedly speeds up data retrieval
+  //database.ref('/brands/').on('value',function() {});
+  database.ref('/brands/').once('value').then(function(snapshot){
+    var allBrands = snapshot.val();
+    createBrandList(allBrands);
+  });
+  // Get the specific brand info we need
+  database.ref('/'+brand+'/').once('value').then(function(snapshot){
     document.getElementById('loading-spinner').classList.add('hidden');
     document.getElementById('breadcrumbs').classList.remove('hidden');
     brandData = snapshot.val();
     countryData = brandData['market info'];
     currentData = brandData;
-    // remove ordering object at position [0]
-    //countryData.shift();
+    //page is the url ?page=parameter !
     if(page) goToPage(brand, page);
     createList(currentData);
-    //console.log(brandData);
   }, function(error) {
     // The Promise was rejected.
     if(error.toString().indexOf('permission') != -1) {
@@ -253,7 +259,7 @@ function clickItem(e) {
     title = 'market info';
   }
   //get data using id
-  var infoObject = getObjectBy('name',title);
+  var infoObject = getObjectBy('id',title);
   // market info is list of countries so need to make new country list
   if(title.toLowerCase()=='market info') {
     getCountryData();
@@ -387,7 +393,7 @@ function setupEditButtons() {
 function removeCard() {
   if (confirm('Are you sure you want to remove this card from the database?')) {
     var currentItem = document.getElementById('card-title').dataset.fbid;
-    var infoObject = getObjectBy('name', currentItem);
+    var infoObject = getObjectBy('id', currentItem);
     var ref = getfbRef(infoObject);
 
     var fbRef = database.ref('/'+brand+'/'+ref);
@@ -420,10 +426,10 @@ function addSection() {
 function uploadFile() {
 
   var file = document.getElementById("file-upload").files[0];
-  var currentItem = document.getElementById("current-item").innerHTML;
-  var infoObject = getObjectBy('name',currentItem);
+  var objectID = document.getElementById('card-title').dataset.fbid;
+  var infoObject = getObjectBy('id',objectID);
   var uploadText = document.getElementById('upload-text');
-  var fileName = brand + "-" + currentItem +  "-" + file.name;
+  var fileName = brand + "-" + infoObject.name +  "-" + file.name;
 
   var storageRef = storage.ref();
 
@@ -431,13 +437,15 @@ function uploadFile() {
   var imageRef = storageRef.child('images/'+ fileName);
   imageRef.getDownloadURL().then(function(url) {
     if(infoObject.images.includes(url)) {
+      //we already have the url in the object
       uploadText.innerHTML = 'File already exists in storage';
     } else {
-      addUrlToDB(url, currentItem);
+      // add the url to the DB if the file exists but its not on the object
+      addUrlToDB(url, objectID);
     }
     return;
   }).catch(function(error) {
-    //continue as normal
+    //continue as normal - file should be uploaded and url added to object
     //put request upload file to firebase storage
     var uploadTask = imageRef.put(file);
     uploadTask.on('state_changed', function(snapshot){
@@ -460,24 +468,21 @@ function uploadFile() {
       // Handle successful uploads on complete
       uploadText.innerHTML = '';
       var downloadURL = uploadTask.snapshot.downloadURL;
-      addUrlToDB(downloadURL,currentItem);
+      addUrlToDB(downloadURL,objectID);
     });
   });
 
 }
 
 function addUrlToDB(url,currentItem) {
-  console.log(currentItem);
   // get the current country object to add the images
-  var infoObject = getObjectBy('name',currentItem);
-  console.log(infoObject);
+  var infoObject = getObjectBy('id',currentItem);
   var ref = getfbRef(infoObject);
   // if no images currently, create the array
   infoObject.images = infoObject.images || [];
   if(!Array.isArray(infoObject.images)) {
     infoObject.images = [infoObject.images]
   }
-  console.log("images: ",infoObject.images);
   infoObject.images.push(url);
   // update database with new image
   var fbRef = database.ref('/'+brand+'/'+ref);
@@ -497,8 +502,8 @@ function removeImage(e) {
   var imageId = e.target.previousElementSibling.id;
   var imageSrc = e.target.previousElementSibling.src;
 
-  var currentItem = document.getElementById('current-item').innerHTML;
-  var infoObject = getObjectBy('name',currentItem);
+  var objectID = document.getElementById('card-title').dataset.fbid;
+  var infoObject = getObjectBy('id',objectID);
 
   var ref = getfbRef(infoObject);
 
@@ -528,6 +533,56 @@ function removeImage(e) {
 *  END OF IMAGE SCRIPTS
 */
 
+
+function createBrandList(brandData) {
+  const brandArea = document.getElementById('brand-list');
+  var moustacheSections = [];
+  for (var key in brandData) {
+    brandData[key]['cleanname'] = brandData[key].name.toLowerCase();
+    moustacheSections.push(brandData[key]);
+  }
+  var moustacheObject = { 'allBrands': moustacheSections };
+  var template =
+  '<div> \
+  {{#allBrands}} \
+    <a class="brand-logo" href="?brand={{cleanname}}" id="logo-{{cleanname}}" > \
+      <img src="{{img}}" alt="{{name}} logo"/> \
+    </a> \
+  {{/allBrands}} \
+  </div>';
+  var html = Mustache.to_html(template, moustacheObject);
+  brandArea.innerHTML = html;
+  document.getElementById("logo-"+brand).classList.add('active');
+
+}
+
+function addBrand() {
+  var template =
+  '<h3 id="card-title"> \
+  <span id="current-item" contentEditable>Brand Name: Edit Me</span> <a class="btn btn-success"><i class="icon-ok"></i> Done</a> <a class="btn btn-danger" id="remove-card"><i class="icon-trash-empty"></i> Cancel & Remove</a></h3> \
+  <label class="custom-file-upload button" id="upload-container"><input type="file" id="brand-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Change Image </label> <span id="upload-text"></span>\
+  <span id="card-info-text"></span>';
+  var html = Mustache.to_html(template);
+  // instanciate new modal
+  if(modal==null) {
+    modal = new tingle.modal({
+        footer: true,
+        stickyFooter: false,
+        closeMethods: ['overlay', 'button', 'escape'],
+        closeLabel: "Close",
+        cssClass: ['brand-modal']
+    });
+  }
+  // set content
+  modal.setContent(html);
+  // open modal
+  modal.open();
+  newBrandModalSetup();
+}
+
+function newBrandModalSetup() {
+
+}
 
 function viewGrid() {
   createList(currentData);
@@ -563,15 +618,6 @@ function getBrandData() {
 }
 
 
-function syncData(cid) {
-  console.log("cid: ",cid," sheet: ",brand);
-  // just trigger the sheet to get new data for the 1 record
-  //request('GET', 'https://script.google.com/macros/s/AKfycbzG2biCtXYdTxt5sLhfh1V5lE95V1ZhFVbkdcrR-Bua21zTihCa/exec?cid='+cid+'&sheet='+brand).done(function (res) {
-    //brandData = JSON.parse(res.getBody());
-    //setListData(brandData);
-    //console.log(res.getBody());
-  //});
-}
 
 
 /*
@@ -661,6 +707,13 @@ function addNewItem() {
 
 function endEdit(event) {
   console.log('in endEdit');
+  if(event.target.innerHTML=="" && confirm('You left something blank. Do you want to remove this section?')) {
+    var editableElement = event.target;
+    editableElement.parentElement.parentElement.removeChild(editableElement.parentElement);
+  } else if(event.target.innerHTML=="") {
+    //focus on section
+    event.target.innerHTML = "&nbsp;";
+  }
   var infoText = document.getElementById('card-info-text');
   infoText.innerHTML = "Saving...";
   var infoID = document.getElementById('card-title').dataset.fbid;
@@ -676,7 +729,7 @@ function endEdit(event) {
     newObject[key] = prop;
   });
 
-  var oldObject = getObjectBy('name',infoID);
+  var oldObject = getObjectBy('id',infoID);
   if(oldObject.images) newObject.images = oldObject.images;
   var ref = getfbRef(oldObject);
   // now we can update the Firebase Database
@@ -772,8 +825,8 @@ function getURLParameter(name) {
 
 function imgError(e) {
   var image = e.target;
-  var currentItem = document.getElementById('current-item').innerHTML;
-  var infoObject = getObjectBy('name',currentItem);
+  var objectID = document.getElementById('card-title').dataset.fbid;
+  var infoObject = getObjectBy('id',objectID);
   var ref = getfbRef(infoObject);
 
   infoObject.images.splice(image.id,1);
@@ -783,28 +836,4 @@ function imgError(e) {
   });
   image.parentNode.outerHTML = "";
   finalModalSetup(infoObject);
-}
-
-
-function splitIntoCategories(data) {
-  //first make list of categories
-  var categoryList = [];
-  data.map(function(item){
-   if(categoryList.indexOf(item.category)==-1) {
-     // new category, so make new list
-     categoryList.push(item.category);
-   }
-  });
-  var dataInCategories = [];
-  categoryList.map(function(category){
-   var itemsInCategory = [];
-   data.map(function(item) {
-       if(item.category==category){
-         itemsInCategory.push(item);
-       }
-   })
-   dataInCategories.push(itemsInCategory);
-   //document.getElementById('main-list').appendChild(makeUL(itemsInCategory));
-  })
-  return dataInCategories;
 }

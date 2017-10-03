@@ -264,13 +264,14 @@ input.searchbar {
 #brand-selection {
   float: right;
   margin: 12px 8px;
+  position: relative;
 }
 
 #brand-selection .brand-logo {
   display: inline-block;
   opacity: 0.6;
   filter: grayscale(0.3);
-  padding: 0 8px;
+  padding: 0 6px;
   cursor: pointer;
   transition: all 0.1s
 }
@@ -280,8 +281,24 @@ input.searchbar {
 }
 
 #brand-selection .brand-logo img {
-  max-height: 50px;
+  max-height: 40px;
 }
+
+body:not(.editmode) #new-brand {
+  display: none;
+}
+a#new-brand {
+  cursor: pointer;
+  transition: all 0.1s;
+  padding: 6px 10px;
+  border: 3px solid #efefef;
+  position: absolute;
+  left: -45px;
+}
+a#new-brand:hover {
+  border: 3px solid #d4cfcf;
+}
+
 
 #add-btn:disabled {
   opacity: 0.3;
@@ -615,7 +632,9 @@ dd.section-content {
   float: right;
   margin: 15px auto 0;
 }
-
+.brand-modal.tingle-modal .custom-file-upload {
+  float: left;
+}
 
 
 .tingle-modal input[type="file"] {
@@ -833,7 +852,38 @@ footer ul li:hover span {
   #user-signed-in {
     clear: both;
     width: 100%;
-    text-align: right;
+  }
+
+  #user-info {
+    float: left;
+  }
+  #user-info span {
+    display: block;
+  }
+  #user-info span.divider {
+    display: none;
+  }
+
+  #switch-button {
+    float:right;
+  }
+
+
+  .input-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  #brand-selection .brand-logo {
+    padding: 0 4px;
+  }
+  #brand-selection .brand-logo img {
+    max-height: 30px;
+  }
+
+  .tingle-modal-box a.btn:not(.btn-default) {
+    margin-bottom: 5px;
+    clear: both;
   }
 
 }
