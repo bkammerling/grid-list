@@ -196,6 +196,7 @@ function createList(data) {
     element.addEventListener('click', clickItem, false);
   });
   if(editMode) addNewItemButton();
+  addInnerCardContent();
 }
 
 function makeUL(dataObject) {
@@ -218,6 +219,7 @@ function makeUL(dataObject) {
       <li class="list-item" id="{{cleanName}}" data-title="{{key}}"> \
         {{#code}}<span class="code-badge">{{code}}</span>{{/code}} \
         <span class="list-item-title">{{name}}</span> \
+        <div id="{{cleanName}}-inner" class="inner-card-content"></div>\
       </li> \
       {{/brandList}} \
     </ul> \
@@ -225,6 +227,24 @@ function makeUL(dataObject) {
   var html = Mustache.to_html(template, moustacheObject);
   setupFooter(moustacheObject);
   return html;
+}
+
+function addInnerCardContent() {
+  var items = document.getElementsByClassName('inner-card-content');
+  Array.from(items).forEach(function(element) {
+    var name = element.id.split("-inner")[0];
+
+    if(name.toLowerCase()!='market info') {
+      console.log(currentData);
+      //get data using id
+      var infoObject = getObjectBy('name',name);
+      // get html using mustache.js template
+      var html = modalTemplate(infoObject);
+      element.innerHTML = html;
+    }
+
+
+  });
 }
 
 

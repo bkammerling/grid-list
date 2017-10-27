@@ -487,6 +487,10 @@ body.signed-out ul.list {
     padding-top: 2px;
 }
 
+.inner-card-content {
+  display: none;
+}
+
 img.close-img {
   display: none;
   float: right;
