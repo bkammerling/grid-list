@@ -6,12 +6,12 @@ const config = {
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
 };
-var brandData, countryData, currentData, properties, editMode;
+var brandData, countryData, currentData, properties, editMode, allBrands;
 const brand = getURLParameter('brand') || "monster";
 brand = brand.toLowerCase();
 document.getElementById("current-brand").innerHTML = brand;
 document.getElementById("current-brand").addEventListener('click',getBrandData,false);
-document.getElementById("new-brand").addEventListener('click',addBrand,false);
+document.getElementById("new-brand").addEventListener('click',editBrand,false);
 var page = getURLParameter('page') || null;
 
 /* Initialize TESTING Firebase
@@ -121,11 +121,11 @@ function getFirebaseData() {
   // first line supposedly speeds up data retrieval
   //database.ref('/brands/').on('value',function() {});
   database.ref('/brands/').once('value').then(function(snapshot){
-    var allBrands = snapshot.val();
+    allBrands = snapshot.val();
     createBrandList(allBrands);
   });
   // Get the specific brand info we need
-  database.ref('/'+brand+'/').once('value').then(function(snapshot){
+  database.ref('brand_data/'+brand+'/').once('value').then(function(snapshot){
     document.getElementById('loading-spinner').classList.add('hidden');
     document.getElementById('breadcrumbs').classList.remove('hidden');
     brandData = snapshot.val();
@@ -396,7 +396,7 @@ function removeCard() {
     var infoObject = getObjectBy('id', currentItem);
     var ref = getfbRef(infoObject);
 
-    var fbRef = database.ref('/'+brand+'/'+ref);
+    var fbRef = database.ref('brand_data/'+brand+'/'+ref);
     fbRef.remove().then(function() {
       delete currentData[currentItem];
       modal.close();
@@ -485,7 +485,7 @@ function addUrlToDB(url,currentItem) {
   }
   infoObject.images.push(url);
   // update database with new image
-  var fbRef = database.ref('/'+brand+'/'+ref);
+  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
   fbRef.update(infoObject).then(function() {
     console.log('fb database update complete');
     document.getElementById('card-info-text').innerHTML = "Saved. You're up to date."
@@ -512,7 +512,7 @@ function removeImage(e) {
     // File deleted successfully
     infoObject.images.splice(imageId,1);
 
-    var fbRef = database.ref('/'+brand+'/'+ref);
+    var fbRef = database.ref('brand_data/'+brand+'/'+ref);
     fbRef.update(infoObject).then(function() {
       //syncData(countryIndex);
     });
@@ -543,26 +543,29 @@ function createBrandList(brandData) {
   }
   var moustacheObject = { 'allBrands': moustacheSections };
   var template =
-  '<div> \
-  {{#allBrands}} \
-    <a class="brand-logo" href="?brand={{cleanname}}" id="logo-{{cleanname}}" > \
+  ' {{#allBrands}} \
+    <a class="brand-logo" href="?brand={{cleanname}}" id="logo-{{cleanname}}" data-fbid="{{name}}"> \
       <img src="{{img}}" alt="{{name}} logo"/> \
     </a> \
-  {{/allBrands}} \
-  </div>';
+  {{/allBrands}}';
   var html = Mustache.to_html(template, moustacheObject);
   brandArea.innerHTML = html;
   document.getElementById("logo-"+brand).classList.add('active');
-
+  if(editMode) toggleBrandEdit();
 }
 
-function addBrand() {
+function editBrand(e) {
+  e.preventDefault();
+  var currentBrand = this.dataset.fbid ? allBrands[this.dataset.fbid.toLowerCase()] : { 'name':false,'img':false };
+  console.log(allBrands, currentBrand, this.dataset.fbid);
   var template =
-  '<h3 id="card-title"> \
-  <span id="current-item" contentEditable>Brand Name: Edit Me</span> <a class="btn btn-success"><i class="icon-ok"></i> Done</a> <a class="btn btn-danger" id="remove-card"><i class="icon-trash-empty"></i> Cancel & Remove</a></h3> \
-  <label class="custom-file-upload button" id="upload-container"><input type="file" id="brand-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Change Image </label> <span id="upload-text"></span>\
+  '<h3 id="card-title" data-fbid="{{#name}}{{name}}{{/name}}"> \
+  <span id="current-item" contentEditable>{{#name}}{{name}}{{/name}}{{^name}}Brand Name: Edit Me{{/name}}</span> <a class="btn btn-success" id="brand-done"><i class="icon-ok"></i> Done</a> <a class="btn btn-danger" id="cancel-brandedit">Cancel</a></h3> \
+    <div class="image-container"> \
+    <img src="{{#img}}{{img}}{{/img}}{{^img}}https://unsplash.it/100/100/?random{{/img}}" id="brand-image" alt="image for {{name}}" class="modal-image"> </div>  \
+  <label class="custom-file-upload button" id="upload-container"><input type="file" id="file-upload" name="files[]" accept="image/x-png,image/gif,image/jpeg" />  Change Image </label> <span id="upload-text"></span>\
   <span id="card-info-text"></span>';
-  var html = Mustache.to_html(template);
+  var html = Mustache.to_html(template, currentBrand);
   // instanciate new modal
   if(modal==null) {
     modal = new tingle.modal({
@@ -581,7 +584,119 @@ function addBrand() {
 }
 
 function newBrandModalSetup() {
+  // once dom has updated with modal, newBrandModalSetup runs
+  // add error listener for images
+  var imageItems = document.getElementsByClassName('modal-image');
+  Array.from(imageItems).forEach(function(element) {
+    element.addEventListener('error', imgError, false);
+  });
+  var cancelButton = document.getElementById('cancel-brandedit');
+  cancelButton.addEventListener('click', function() { modal.close(); }, false);
+  var doneButton = document.getElementById('brand-done');
+  doneButton.addEventListener('click', saveBrand, false);
+  // setup upload button
+  document.getElementById('file-upload').addEventListener('change', uploadBrandImage);
+}
 
+function uploadBrandImage() {
+  //upload the image for a new brand / editting brand
+  var file = document.getElementById("file-upload").files[0];
+  var fileName = "brandimage-"+file.name;
+  var uploadText = document.getElementById('upload-text');
+
+  var storageRef = storage.ref();
+
+  //dynamically set reference to the file name
+  var imageRef = storageRef.child('images/brand-logos/'+ fileName);
+  imageRef.getDownloadURL().then(function(url) {
+    // the file exists in storage, no point in uploading again
+    document.getElementById("brand-image").src = url;
+    return;
+  }).catch(function(error) {
+    //continue as normal - file should be uploaded and url added to object
+    var uploadTask = imageRef.put(file);
+    uploadTask.on('state_changed', function(snapshot){
+      var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      uploadText.innerHTML = 'Uploading file: '+file.name;
+    }, function(error) {
+      // Handle unsuccessful uploads
+      uploadText.innerHTML = 'There was an error in the upload.';
+    }, function() {
+      // Handle successful uploads on complete
+      uploadText.innerHTML = '';
+      var downloadURL = uploadTask.snapshot.downloadURL;
+      document.getElementById("brand-image").src = downloadURL;
+    });
+  });
+
+}
+
+function saveBrand(e) {
+  var fbID = document.getElementById("card-title").dataset.fbid.toLowerCase();
+
+  var newName = document.getElementById("current-item").innerHTML.toLowerCase();
+  var img = document.getElementById("brand-image").src;
+  var brandObject = {
+    'name': newName,
+    'img': img
+  }
+
+  var infoText = document.getElementById('card-info-text');
+  infoText.innerHTML = "Saving...";
+  console.log('Saving Brand: ',fbID, brandObject);
+
+  if(fbID) { // brand already exists
+    updateBrand(fbID,brandObject);
+  } else { // save a new brand
+    // now we can update the Firebase Database
+    var brandName = brandObject.name;
+    var fbRef = database.ref('/brands/'+brandName);
+    fbRef.set(brandObject).then(function() {
+      modal.close();
+      console.log('fb db update complete')
+    });
+    var brandRef = database.ref('brand_data/'+brandName);
+    var newBrandData = {
+      "-KvWnS6__VlfsY6qptaa" : {
+        "Hello world " : "Hello description",
+        "id" : "-KvWnS6__VlfsY6qptaa",
+        "name" : "Main Info"
+      },
+      "market info" : {
+        "-Kvkdb290512" : {
+          "Language" : "English",
+          "code" : "XX",
+          "id" : "-Kvkdb290512",
+          "name" : "Country"
+        }
+      }
+    }
+    brandRef.set(newBrandData);
+  }
+  allBrands[brandName] = brandObject;
+  if(allBrands[fbID]) delete allBrands[fbID];
+  if(brand = fbID) brand = newName;
+  createBrandList(allBrands);
+}
+
+function updateBrand(fbID,brandObject) {
+  var brandRef = database.ref('/brands');
+  // first update the brands table (json)
+  var brandUpdate = {};
+  brandUpdate[fbID] = null;
+  brandUpdate[brandObject.name] = brandObject;
+  brandRef.update(brandUpdate);
+  // now we update the single brand_data table json
+  var tableRef = database.ref('brand_data/')
+  tableRef.child(fbID).once('value').then(function(snap) {
+    var data = snap.val();
+    console.log(data);
+    var tableUpdate = {};
+    tableUpdate[fbID] = null
+    tableUpdate[brandObject.name] = data
+    tableRef.update(tableUpdate);
+    modal.close();
+  });
 }
 
 function viewGrid() {
@@ -619,7 +734,6 @@ function getBrandData() {
 
 
 
-
 /*
 * -----
 *  EDITTING MODE AND DB UPDATING
@@ -628,6 +742,7 @@ function getBrandData() {
 
 
 function editModeToggle() {
+  toggleBrandEdit();
   if(editMode) {
     document.body.classList.add('editmode');
     addNewItemButton();
@@ -679,17 +794,25 @@ function makeTextEditable() {
   });
 }
 
+function toggleBrandEdit() {
+  var brands = document.getElementsByClassName("brand-logo");
+  Array.from(brands).forEach(function(element) {
+    editMode ? element.addEventListener('click',editBrand,false) : element.removeEventListener('click',editBrand,false);
+  });
+
+}
+
 function addNewItem() {
   var newItem = {
       'name':'| New Title',
       'Section name': 'Section description'
   };
   if(currentData==brandData) {
-    var newItemRef = database.ref('/'+brand+'/').push();
+    var newItemRef = database.ref('brand_data/'+brand+'/').push();
     currentData[newItemRef.key] = newItem;
   } else {
     newItem.code = 'XX';
-    newItemRef = database.ref('/'+brand+'/market info/').push();
+    newItemRef = database.ref('brand_data/'+brand+'/market info/').push();
     currentData[newItemRef.key] = newItem;
   }
   newItem.id = newItemRef.key;
@@ -733,7 +856,7 @@ function endEdit(event) {
   if(oldObject.images) newObject.images = oldObject.images;
   var ref = getfbRef(oldObject);
   // now we can update the Firebase Database
-  var fbRef = database.ref('/'+brand+'/'+ref);
+  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
   fbRef.set(newObject).then(function() {
     currentData[infoID] = newObject;
     createList(currentData);
@@ -830,7 +953,7 @@ function imgError(e) {
   var ref = getfbRef(infoObject);
 
   infoObject.images.splice(image.id,1);
-  var fbRef = database.ref('/'+brand+'/'+ref);
+  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
   fbRef.update(infoObject).then(function() {
     //syncData(countryIndex);
   });

@@ -8,7 +8,7 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" async>
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans|PT+Sans" rel="stylesheet">
 
     <link href="css/normalize.min.css" rel="stylesheet"><link href="css/tingle.min.css" rel="stylesheet"><link href="css/MyFontsTradeGothic.css" rel="stylesheet"><link href="css/fontello/fontello.css" rel="stylesheet"><link href="css/main.css" rel="stylesheet"></head>
     <body class="loading signed-out">
@@ -22,14 +22,16 @@
           <header>
             <div id="user-signed-in">
               <div id="user-info">
-                <span id="signin-name"></span> | <span id="signin-email"></span> | <span id="sign-out" class="link-style">Sign Out</span>
+                <span id="signin-name"></span> <span class="divider">|</span> <span id="signin-email"></span> <span class="divider">|</span> <span id="sign-out" class="link-style">Sign Out</span>
               </div>
               <!-- Rounded switch -->
-              <span class="switch-label">Edit mode</span>
-              <label class="switch">
-                <input type="checkbox" id="edit-button">
-                <span class="slider round"></span>
-              </label>
+              <div id="switch-button">
+                <span class="switch-label">Edit mode</span>
+                <label class="switch">
+                  <input type="checkbox" id="edit-button">
+                  <span class="slider round"></span>
+                </label>
+              </div>
             </div>
             <div class="page-nav">
             </div>
@@ -45,12 +47,8 @@
             <img src='./img/list.svg' id="view-list" alt="3 horizontal lines blocks - to view list" class='input-icon' />
             <img src='./img/daterange.svg' id="sort-list" style="display: none;" alt="a to z - to sort" class='input-icon' />
             <div id='brand-selection'>
-              <a class="brand-logo" href="?brand=monster" id="logo-monster" >
-                <img src="./img/brands/monster-logo-2.png" alt="monster logo"/>
-              </a>
-              <a class="brand-logo" href="?brand=meatliquor" id="logo-meatliquor">
-                <img src="./img/brands/meliq-logo.png" alt="meatliquor logo"/>
-              </a>
+              <a id="new-brand">+</a>
+              <div id="brand-list"></div>
             </div>
           </div>
 
