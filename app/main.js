@@ -1,4 +1,3 @@
-
 const config = {
   apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
   authDomain: "knowledge-database-87320.firebaseapp.com",
@@ -6,13 +5,6 @@ const config = {
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
 };
-var brandData, countryData, currentData, properties, editMode, allBrands;
-const brand = getURLParameter('brand') || "monster";
-brand = brand.toLowerCase();
-document.getElementById("current-brand").innerHTML = brand;
-document.getElementById("current-brand").addEventListener('click',getBrandData,false);
-document.getElementById("new-brand").addEventListener('click',editBrand,false);
-var page = getURLParameter('page') || null;
 
 /* Initialize TESTING Firebase
 var config = {
@@ -23,6 +15,16 @@ var config = {
   storageBucket: "kdb-test.appspot.com",
 };
 */
+
+var brandData, countryData, currentData, properties, editMode, allBrands;
+const brand = getURLParameter('brand') || "monster";
+brand = brand.toLowerCase();
+document.getElementById("current-brand").innerHTML = brand;
+document.getElementById("current-brand").addEventListener('click',getBrandData,false);
+document.getElementById("new-brand").addEventListener('click',editBrand,false);
+var page = getURLParameter('page') || null;
+
+
 
 firebase.initializeApp(config);
 
@@ -235,7 +237,6 @@ function addInnerCardContent() {
     var name = element.id.split("-inner")[0];
 
     if(name.toLowerCase()!='market info') {
-      console.log(currentData);
       //get data using id
       var infoObject = getObjectBy('name',name);
       // get html using mustache.js template
@@ -258,9 +259,10 @@ function setupFooter(dataObject) {
 
 function buildFooter(dataObject) {
   var moustacheObject = dataObject;
+  console.log('footer', moustacheObject);
   var template =
     '<ul class="footer-list">{{#brandList}} \
-      <li class="footer-item" id="{{cleanName}}" data-title="{{name}}"> \
+      <li class="footer-item" id="{{cleanName}}" data-title="{{key}}"> \
         <span class="list-item-title">{{name}}</span> \
       </li> \
       {{/brandList}} \
@@ -316,7 +318,6 @@ function clickItem(e) {
 */
 
 function modalTemplate(data) {
-  console.log(data);
   var dataObject = JSON.parse(JSON.stringify(data));
   var moustacheSections = { 'sections' : [], 'name': dataObject.name };
   //dataObject is a country
@@ -353,8 +354,6 @@ function modalTemplate(data) {
       moustacheSections['sections'].push(sectionObject);
     }
   }
-
-  console.log(moustacheSections);
 
   var template =
   '<h3 id="card-title" data-fbid="{{id}}">{{#isCountry}}<span class="code-badge editable"  id="country-code">{{code}}</span>{{/isCountry}} \
@@ -401,6 +400,8 @@ function finalModalSetup(infoObject) {
   if(typeof infoObject.images == 'object') {
     if(infoObject.images.length >=2) document.getElementById('upload-container').classList.add('hidden');
   }
+
+  document.getElementsByClassName("country-modal")[0].id = "main-modal";
 }
 
 function setupEditButtons() {
@@ -865,7 +866,7 @@ function endEdit(event) {
   newObject.name = document.getElementById('current-item').innerHTML;
   if(document.getElementById('country-code')) newObject.code = document.getElementById('country-code').innerHTML;
   // get text from sections
-  var cardSections = document.getElementsByClassName("section");
+  var cardSections = document.getElementById("main-modal").getElementsByClassName("section");
   Array.from(cardSections).forEach(function(element) {
     var key = element.firstElementChild.innerHTML;
     var prop = element.lastElementChild.innerHTML;
@@ -895,7 +896,7 @@ function endEdit(event) {
 function getObjectBy(property,id) {
   //get data using id
   if(currentData[id]) return currentData[id];
-  console.log('getObjectBy: ',property,id);
+  //console.log('getObjectBy: ',property,id);
   for (var key in currentData) {
     if(currentData[key][property]==id) return currentData[key];
   }
