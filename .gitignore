@@ -35,3 +35,14 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+**/vendor
+**/firebase
+**/img
+**/webfonts
+**/fontello
+**/font
+dist
+dist/
+MyFontsTradeGothic.css
+*.json

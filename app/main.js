@@ -1,9 +1,15 @@
 const config = {
+  /*
   apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
   authDomain: "knowledge-database-87320.firebaseapp.com",
   databaseURL: "https://knowledge-database-87320.firebaseio.com",
   projectId: "knowledge-database-87320",
   storageBucket: "knowledge-database-87320.appspot.com",
+*/
+  apiKey: "AIzaSyDbrG_LBBZWCFNmgo593rNG9jrDSif8-MY",
+  authDomain: "timesheet-test-6a0cf.firebaseapp.com",
+  databaseURL: "https://timesheet-test-6a0cf.firebaseio.com",
+  projectId: "timesheet-test-6a0cf",
 };
 
 /* Initialize TESTING Firebase
@@ -122,12 +128,12 @@ function getFirebaseData() {
   // Get the brand selection we have on the db
   // first line supposedly speeds up data retrieval
   //database.ref('/brands/').on('value',function() {});
-  database.ref('/brands/').once('value').then(function(snapshot){
+  database.ref('knowledge/brands/').once('value').then(function(snapshot){
     allBrands = snapshot.val();
     createBrandList(allBrands);
   });
   // Get the specific brand info we need
-  database.ref('brand_data/'+brand+'/').once('value').then(function(snapshot){
+  database.ref('knowledge/brand_data/'+brand+'/').once('value').then(function(snapshot){
     document.getElementById('loading-spinner').classList.add('hidden');
     document.getElementById('breadcrumbs').classList.remove('hidden');
     brandData = snapshot.val();
@@ -417,7 +423,7 @@ function removeCard() {
     var infoObject = getObjectBy('id', currentItem);
     var ref = getfbRef(infoObject);
 
-    var fbRef = database.ref('brand_data/'+brand+'/'+ref);
+    var fbRef = database.ref('knowledge/brand_data/'+brand+'/'+ref);
     fbRef.remove().then(function() {
       delete currentData[currentItem];
       modal.close();
@@ -506,7 +512,7 @@ function addUrlToDB(url,currentItem) {
   }
   infoObject.images.push(url);
   // update database with new image
-  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
+  var fbRef = database.ref('knowledge/brand_data/'+brand+'/'+ref);
   fbRef.update(infoObject).then(function() {
     console.log('fb database update complete');
     document.getElementById('card-info-text').innerHTML = "Saved. You're up to date."
@@ -533,7 +539,7 @@ function removeImage(e) {
     // File deleted successfully
     infoObject.images.splice(imageId,1);
 
-    var fbRef = database.ref('brand_data/'+brand+'/'+ref);
+    var fbRef = database.ref('knowledge/brand_data/'+brand+'/'+ref);
     fbRef.update(infoObject).then(function() {
       //syncData(countryIndex);
     });
@@ -671,12 +677,12 @@ function saveBrand(e) {
   } else { // save a new brand
     // now we can update the Firebase Database
     var brandName = brandObject.name;
-    var fbRef = database.ref('/brands/'+brandName);
+    var fbRef = database.ref('knowledge/brands/'+brandName);
     fbRef.set(brandObject).then(function() {
       modal.close();
       console.log('fb db update complete')
     });
-    var brandRef = database.ref('brand_data/'+brandName);
+    var brandRef = database.ref('knowledge/brand_data/'+brandName);
     var newBrandData = {
       "-KvWnS6__VlfsY6qptaa" : {
         "Hello world " : "Hello description",
@@ -701,14 +707,14 @@ function saveBrand(e) {
 }
 
 function updateBrand(fbID,brandObject) {
-  var brandRef = database.ref('/brands');
+  var brandRef = database.ref('knowledge/brands');
   // first update the brands table (json)
   var brandUpdate = {};
   brandUpdate[fbID] = null;
   brandUpdate[brandObject.name] = brandObject;
   brandRef.update(brandUpdate);
   // now we update the single brand_data table json
-  var tableRef = database.ref('brand_data/')
+  var tableRef = database.ref('knowledge/brand_data/')
   tableRef.child(fbID).once('value').then(function(snap) {
     var data = snap.val();
     console.log(data);
@@ -829,11 +835,11 @@ function addNewItem() {
       'Section name': 'Section description'
   };
   if(currentData==brandData) {
-    var newItemRef = database.ref('brand_data/'+brand+'/').push();
+    var newItemRef = database.ref('knowledge/brand_data/'+brand+'/').push();
     currentData[newItemRef.key] = newItem;
   } else {
     newItem.code = 'XX';
-    newItemRef = database.ref('brand_data/'+brand+'/market info/').push();
+    newItemRef = database.ref('knowledge/brand_data/'+brand+'/market info/').push();
     currentData[newItemRef.key] = newItem;
   }
   newItem.id = newItemRef.key;
@@ -877,7 +883,7 @@ function endEdit(event) {
   if(oldObject.images) newObject.images = oldObject.images;
   var ref = getfbRef(oldObject);
   // now we can update the Firebase Database
-  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
+  var fbRef = database.ref('knowledge/brand_data/'+brand+'/'+ref);
   fbRef.set(newObject).then(function() {
     currentData[infoID] = newObject;
     createList(currentData);
@@ -974,7 +980,7 @@ function imgError(e) {
   var ref = getfbRef(infoObject);
 
   infoObject.images.splice(image.id,1);
-  var fbRef = database.ref('brand_data/'+brand+'/'+ref);
+  var fbRef = database.ref('knowledge/brand_data/'+brand+'/'+ref);
   fbRef.update(infoObject).then(function() {
     //syncData(countryIndex);
   });
