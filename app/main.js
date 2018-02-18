@@ -1,17 +1,10 @@
 const config = {
-  /*
-  apiKey: "AIzaSyA_0zTo845L0-w-tMfOb8Yp1kUKjQeQKIY",
-  authDomain: "knowledge-database-87320.firebaseapp.com",
-  databaseURL: "https://knowledge-database-87320.firebaseio.com",
-  projectId: "knowledge-database-87320",
-  storageBucket: "knowledge-database-87320.appspot.com",
-*/
-  apiKey: "AIzaSyDbrG_LBBZWCFNmgo593rNG9jrDSif8-MY",
-  authDomain: "timesheet-test-6a0cf.firebaseapp.com",
-  databaseURL: "https://timesheet-test-6a0cf.firebaseio.com",
-  projectId: "timesheet-test-6a0cf",
+  apiKey: "AIzaSyBU6-zU6poDqcBiyg4poi9y1BPno-YcAPc",
+  authDomain: "good-humans-timesheet.firebaseapp.com",
+  databaseURL: "https://good-humans-timesheet.firebaseio.com",
+  projectId: "good-humans-timesheet",
+  storageBucket: "good-humans-timesheet.appspot.com"
 };
-
 /* Initialize TESTING Firebase
 var config = {
   apiKey: "AIzaSyCOnG9vQhWLjHc1ghnCVZB4SlX_ecS7Z3w",
